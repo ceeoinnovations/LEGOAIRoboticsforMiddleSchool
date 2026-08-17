@@ -337,6 +337,93 @@ def l1_cast_stop(e=None):
     _last_cast_magnitude = accel_magnitude(trace)
     _refresh_l1_overlay()
 
+def l1_export_session(e=None):
+    """Class 1 counterpart to l5_export_motions: serializes this tab's raw
+    Lesson 1/2 recordings (the source data every Class 1 lesson reads from
+    — see _datasets above) to a JSON file. Trained models and lesson
+    result tables are deliberately NOT saved, since KNN's 'model' is just
+    the stored examples anyway — loading a file back in is meant to be
+    followed by clicking Train/Retrain again, not treated as restoring a
+    finished session."""
+    name_el = document.getElementById('l1-student-name')
+    student = (name_el.value or 'Student').strip() if name_el else 'Student'
+    fireball = _datasets['fireball']
+    friend_test = _datasets['friend_test']
+    if not fireball and not friend_test:
+        log("No Class 1 data recorded yet — nothing to save.")
+        return
+    payload = {
+        'student': student,
+        'exported_at': datetime.now(timezone.utc).isoformat(),
+        'fireball': fireball,
+        'friend_test': friend_test,
+    }
+    safe_name = ''.join(c if c.isalnum() else '_' for c in student) or 'student'
+    filename = f"class1-session-{safe_name}.json"
+    window.downloadJSON(filename, json.dumps(payload))
+    log(f"Saved {len(fireball)} Fireball example(s) and {len(friend_test)} friend test cast(s) to {filename}.")
+
+def _import_class1_json(text):
+    global knn_fireball, knn_caster
+    try:
+        data = json.loads(text)
+    except Exception as ex:
+        log(f"Could not read that file as JSON ({ex}).")
+        return
+    fireball = data.get('fireball') if isinstance(data, dict) else None
+    friend_test = data.get('friend_test') if isinstance(data, dict) else None
+    if not isinstance(fireball, list) and not isinstance(friend_test, list):
+        log("That file doesn't look like a saved Class 1 session — skipped.")
+        return
+    student = (data.get('student') or 'Imported') if isinstance(data, dict) else 'Imported'
+
+    added_fireball = 0
+    for ex in (fireball or []):
+        trace = ex.get('trace') if isinstance(ex, dict) else None
+        if isinstance(trace, list) and len(trace) >= 4:
+            _datasets['fireball'].append({
+                'label': ex.get('label', 'Fireball'),
+                'trace': trace,
+                'source': ex.get('source', 'you'),
+            })
+            added_fireball += 1
+
+    added_friend = 0
+    for rec in (friend_test or []):
+        trace = rec.get('trace') if isinstance(rec, dict) else None
+        if isinstance(trace, list) and len(trace) >= 4:
+            _datasets['friend_test'].append({
+                'tester': rec.get('tester', student),
+                'trace': trace,
+                'added_to_training': bool(rec.get('added_to_training', False)),
+                'cropped': bool(rec.get('cropped', False)),
+            })
+            added_friend += 1
+
+    # A freshly-loaded session has no trained model yet — clear any model
+    # trained on this tab's own prior data so nobody casts against a stale
+    # mix of old and newly-loaded examples.
+    knn_fireball = None
+    knn_caster = None
+    _refresh_counts()
+    _refresh_l1_overlay()
+    train_btn = document.getElementById('btn-l1-train')
+    if train_btn:
+        train_btn.disabled = len(_datasets['fireball']) < 3
+    check_ready()
+    log(f"Loaded {added_fireball} Fireball example(s) and {added_friend} friend test cast(s) from {student}. "
+        f"Click Train Wand to use them.")
+
+def _on_class1_import_file(event):
+    try:
+        text = str(event.detail.text)
+    except Exception:
+        return
+    _import_class1_json(text)
+
+_class1_import_proxy = create_proxy(_on_class1_import_file)
+document.addEventListener('class1-import-file', _class1_import_proxy)
+
 def l1_clear(e=None):
     global knn_fireball, _last_cast_magnitude
     _datasets['fireball'] = []
