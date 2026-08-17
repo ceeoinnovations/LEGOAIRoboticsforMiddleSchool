@@ -128,7 +128,32 @@
   }
   .terminal div { margin-bottom: 4px; }
 
+  .class-bar {
+    display: flex;
+    gap: 4px;
+    width: 100%;
+    max-width: 1200px;
+    margin-bottom: 10px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px;
+  }
+  .class-btn {
+    flex: 1;
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    padding: 10px 16px;
+    border-radius: 999px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .class-btn:hover:not(.active) { background: #f1f5f9; color: var(--text-primary); }
+  .class-btn.active { background: var(--accent); color: var(--accent-text); }
+
   .tab-bar { display: flex; gap: 8px; width: 100%; max-width: 1200px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab-bar.hidden { display: none; }
   .tab-btn {
     background: var(--card-bg);
     color: var(--text-secondary);
@@ -405,14 +430,23 @@
   <img class="header-logo-ewb" src="images/EngineeringWithBricks.png" alt="Engineering with Bricks logo">
 </div>
 
-<div class="tab-bar">
+<div class="class-bar">
+  <button class="class-btn active" id="class-btn-c1" onclick="switchClass('c1')">Class 1: Supervised Learning</button>
+  <button class="class-btn" id="class-btn-c2" onclick="switchClass('c2')">Class 2: Unsupervised Learning</button>
+</div>
+
+<div class="tab-bar" id="tab-bar-c1">
   <button class="tab-btn active" id="tab-btn-l0" onclick="switchLessonPage('l0')">0. Build Your Wand</button>
   <button class="tab-btn" id="tab-btn-l1" onclick="switchLessonPage('l1')">1. Teach a Spell</button>
   <button class="tab-btn" id="tab-btn-l2" onclick="switchLessonPage('l2')">2. Friend Test</button>
   <button class="tab-btn" id="tab-btn-l3" onclick="switchLessonPage('l3')">3. Data Bias</button>
-  <button class="tab-btn" id="tab-btn-l4" onclick="switchLessonPage('l4')">4. Data Cleaning</button>
-  <button class="tab-btn" id="tab-btn-l5" onclick="switchLessonPage('l5')">5. Hidden Styles</button>
-  <button class="tab-btn" id="tab-btn-l6" onclick="switchLessonPage('l6')">6. New Spells</button>
+  <button class="tab-btn" id="tab-btn-lwho" onclick="switchLessonPage('lwho')">4. Who Cast It?</button>
+  <button class="tab-btn" id="tab-btn-l4" onclick="switchLessonPage('l4')">5. Data Cleaning</button>
+</div>
+
+<div class="tab-bar hidden" id="tab-bar-c2">
+  <button class="tab-btn" id="tab-btn-l5" onclick="switchLessonPage('l5')">1. Hidden Styles</button>
+  <button class="tab-btn" id="tab-btn-l6" onclick="switchLessonPage('l6')">2. New Spells</button>
 </div>
 
 <div class="container">
@@ -744,17 +778,94 @@
           <li>Compare the Before/After bars carefully — if After isn't much higher, adding more of your friend's
             examples (not just one) may help more than retraining again on the same one.</li>
           <li>Retraining doesn't erase your original examples — it just adds the new ones to the mix.</li>
-          <li>If accuracy barely changes, it might not only be a "diversity" problem — check whether Lesson 4's
+          <li>If accuracy barely changes, it might not only be a "diversity" problem — check whether Lesson 5's
             data cleaning issue is also present.</li>
         </ul>
       </details>
     </div>
   </div>
 
-  <!-- Lesson 4 -->
+  <!-- Lesson 4: Who Cast It? (caster-identity classification) -->
+  <div class="page-content hidden" id="page-lwho">
+    <div class="panel main-content">
+      <h2>Lesson 4: Who Cast It?</h2>
+      <p class="tagline">AI isn't magic — but it can look like magic until you understand it.</p>
+
+      <div class="challenge-box">
+        <h3>Challenge</h3>
+        <p>Can the AI tell you and your friend apart, just by how you both cast the same spell?</p>
+      </div>
+
+      <div class="think-like-row">
+        <div class="think-like-box">
+          <h3>Think Like <em>a detective</em></h3>
+          <p>What clues would give away who's casting, even if the spell looks the same?</p>
+        </div>
+        <div class="think-like-box">
+          <h3>Think Like <em>a privacy researcher</em></h3>
+          <p>If AI can recognize how you move, what else could it learn about you without asking?</p>
+        </div>
+      </div>
+
+      <p class="lesson-intro">This reuses the casts you already recorded in Lessons 1 and 2 — no new
+        recording needed to train. This time the AI isn't learning "is this a Fireball?" — it's learning
+        "whose Fireball is this?"</p>
+
+      <div class="subsection">
+        <h3>Step 1: Train the identity classifier</h3>
+        <p class="lesson-intro" style="margin-bottom: 0;">Uses your Lesson 1 examples plus every friend
+          test cast from Lesson 2 — the more casters and casts you have, the better this works.</p>
+        <button id="btn-lwho-train" py-click="lwho_train" disabled style="margin-top: 10px;">Train Identity Classifier</button>
+      </div>
+
+      <div class="subsection">
+        <h3>Step 2: Test it</h3>
+        <label for="lwho-actual-name" style="font-weight: 600; font-size: 0.9rem;">Who's casting right now?</label>
+        <input type="text" id="lwho-actual-name" placeholder="e.g. you, or your friend's name" value="you">
+        <button class="record-btn" id="btn-lwho-cast" disabled
+                onmousedown="wandRecordStart('lwho-cast')" onmouseup="wandRecordStop('lwho-cast')"
+                onkeydown="wandKeyDown(event, 'lwho-cast')" onkeyup="wandKeyUp(event, 'lwho-cast')"
+                onmouseleave="wandRecordCancel('lwho-cast')"
+                ontouchstart="event.preventDefault(); wandRecordStart('lwho-cast')"
+                ontouchend="event.preventDefault(); wandRecordStop('lwho-cast')"
+                style="margin-top: 10px;">
+          Hold &amp; Cast Fireball!
+        </button>
+        <canvas class="trace-canvas" id="trace-canvas-lwho-cast" width="600" height="70" aria-hidden="true"></canvas>
+      </div>
+
+      <div class="subsection">
+        <h3>Results</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Actual caster</th><th>AI's guess</th><th>Confidence</th><th>Correct?</th></tr></thead>
+            <tbody id="lwho-results-body"></tbody>
+          </table>
+        </div>
+        <div class="results-summary" id="lwho-summary">No attempts yet.</div>
+        <div class="actions-row">
+          <button id="btn-lwho-reset" class="danger" py-click="lwho_reset">Reset Results</button>
+        </div>
+      </div>
+
+      <details class="tips-tricks">
+        <summary>Tips &amp; Tricks</summary>
+        <ul>
+          <li>If training says you need more casts, that's the point — go back to Lesson 2 and record a
+            few more attempts (yours or a friend's) rather than treating it as an error.</li>
+          <li>Type the caster's name exactly the way you did in Lesson 2's "Tester's name" field, or the
+            "Correct?" column won't match even when the AI's guess was right.</li>
+          <li>If the AI keeps confusing two people, try casting more differently from each other on
+            purpose, then retrain — see if that makes the two easier to tell apart.</li>
+        </ul>
+      </details>
+    </div>
+  </div>
+
+  <!-- Lesson 5: Data Cleaning -->
   <div class="page-content hidden" id="page-l4">
     <div class="panel main-content">
-      <h2>Lesson 4: Improve It — Data Cleaning</h2>
+      <h2>Lesson 5: Improve It — Data Cleaning</h2>
       <p class="tagline">AI isn't magic — but it can look like magic until you understand it.</p>
 
       <div class="challenge-box">
@@ -847,7 +958,7 @@
   <!-- Lesson 5 -->
   <div class="page-content hidden" id="page-l5">
     <div class="panel main-content">
-      <h2>Lesson 5: Discover Hidden Magic Styles</h2>
+      <h2>Class 2, Lesson 1: Discover Hidden Magic Styles</h2>
       <p class="tagline">AI isn't magic — but it can look like magic until you understand it.</p>
 
       <div class="challenge-box">
@@ -939,7 +1050,7 @@
   <!-- Lesson 6 -->
   <div class="page-content hidden" id="page-l6">
     <div class="panel main-content">
-      <h2>Lesson 6: Make New Spells</h2>
+      <h2>Class 2, Lesson 2: Make New Spells</h2>
       <p class="tagline">AI isn't magic — but it can look like magic until you understand it.</p>
 
       <div class="challenge-box">
@@ -1000,13 +1111,29 @@
 <script>
   // ── Tab switching ──
   window.switchLessonPage = function(name) {
-    ['l0', 'l1', 'l2', 'l3', 'l4', 'l5', 'l6'].forEach(function (p) {
+    ['l0', 'l1', 'l2', 'l3', 'lwho', 'l4', 'l5', 'l6'].forEach(function (p) {
       const el = document.getElementById('page-' + p);
       const btn = document.getElementById('tab-btn-' + p);
       if (!el || !btn) return;
       if (p === name) { el.classList.remove('hidden'); btn.classList.add('active'); }
       else { el.classList.add('hidden'); btn.classList.remove('active'); }
     });
+  };
+
+  // ── Class switching (Class 1: Supervised Learning / Class 2: Unsupervised
+  //    Learning) — each class shows its own lesson tab row and jumps to that
+  //    class's first lesson. Lesson ids (l0-l6) stay as-is in main.py; this
+  //    is a display/nav-only grouping. ──
+  const CLASS_LESSONS = { c1: ['l0', 'l1', 'l2', 'l3', 'lwho', 'l4'], c2: ['l5', 'l6'] };
+  window.switchClass = function(name) {
+    Object.keys(CLASS_LESSONS).forEach(function (c) {
+      const btn = document.getElementById('class-btn-' + c);
+      const bar = document.getElementById('tab-bar-' + c);
+      if (!btn || !bar) return;
+      if (c === name) { btn.classList.add('active'); bar.classList.remove('hidden'); }
+      else { btn.classList.remove('active'); bar.classList.add('hidden'); }
+    });
+    switchLessonPage(CLASS_LESSONS[name][0]);
   };
 
   // ── Press-and-hold record/cast buttons ──

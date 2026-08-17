@@ -8,18 +8,37 @@ entirely client-side via [PyScript](https://pyscript.net) (Pyodide/WASM) over
 the student's machine. Same architecture as the sibling `QLearn-*-PyScript`
 apps in `FETLab-Summer-2026`.
 
-## The five lessons (tabs)
+## Two classes, seven lessons (tabs)
 
-1. **Teach Your Wand a Spell** (supervised learning) — record several examples
-   of one gesture ("Fireball"), train a classifier, then test recognition.
+A top-level Class 1/Class 2 switcher shows one class's lesson tabs at a time
+(internal ids below stay `l0`-`l6` plus `lwho` regardless of the switcher —
+see `CLASS_LESSONS` in `index.html`).
+
+**Class 1: Supervised Learning**
+
+0. **Build Your Wand** — build/orient the Double Motor and pair over Web
+   Bluetooth before any spellcasting.
+1. **Teach Your Wand a Spell** — record several examples of one gesture
+   ("Fireball"), train a classifier, then test recognition.
 2. **Can Your Friend Use It?** (generalization & bias) — a different person
    tries the *same* trained model, with no retraining. Usually degrades —
    a natural entry point for talking about training-data bias.
-3. **Improve It** (fine-tuning) — fold the friend's attempts into the
-   training set, retrain, and compare before/after accuracy.
-4. **Discover Hidden Magic Styles** (unsupervised learning) — record several
-   *unlabeled* mystery motions and let k-means find the groups on its own.
-5. **Make New Spells** — name the discovered clusters and cast them for real,
+3. **Improve It — Data Bias** (fine-tuning) — fold the friend's attempts into
+   the training set, retrain, and compare before/after accuracy.
+4. **Who Cast It?** (multi-class caster-identity classification) — a second,
+   independent classifier trained on *who* cast each recording (reusing
+   Lessons 1-2's data, no new capture step) rather than *what* was cast —
+   generalization (Lesson 3) vs. discrimination, and a hook into real
+   biometric/behavioral-ID privacy questions.
+5. **Improve It — Data Cleaning** — trim leading dead-time from recordings,
+   retrain, and compare before/after accuracy (a different data-quality fix
+   from Lesson 3's diversity problem).
+
+**Class 2: Unsupervised Learning**
+
+1. **Discover Hidden Magic Styles** — record several *unlabeled* mystery
+   motions and let k-means find the groups on its own.
+2. **Make New Spells** — name the discovered clusters and cast them for real,
    with the wand lighting up and beeping differently per recognized spell.
 
 ## Files
@@ -89,7 +108,7 @@ window.
 - **Recognition threshold** (Lesson 1 slider): how close a cast needs to be
   to count as "recognized." Lower it if a class's gestures are sloppy/varied;
   raise it to make recognition stricter.
-- **Number of groups** (Lesson 4 slider): k-means needs to be told how many
+- **Number of groups** (Class 2, Lesson 1 slider): k-means needs to be told how many
   clusters to look for. If a teacher secretly assigned 3 distinct motions
   across the class, 3 is the "right" answer — but it's worth having students
   try other values and see how the grouping changes.

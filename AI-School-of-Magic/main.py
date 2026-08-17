@@ -169,13 +169,16 @@ def check_ready():
         el = document.getElementById(btn_id)
         if el:
             el.disabled = not (connected and knn_fireball is not None)
+    el = document.getElementById('btn-lwho-cast')
+    if el:
+        el.disabled = not (connected and knn_caster is not None)
     el = document.getElementById('btn-l6-cast')
     if el:
         el.disabled = not (connected and knn_spells is not None)
 
 
 # ══════════════════════════════════════════════════════════════
-# GESTURE CAPTURE — shared by all six lessons. A "recording" is: hold a
+# GESTURE CAPTURE — shared by every lesson. A "recording" is: hold a
 # button down, wave the wand, let go. While held, we poll the Double
 # Motor's live IMU reading (dm_device.imu_device, kept up to date by the
 # legoeducation package's own internal notification parsing — same object
@@ -243,7 +246,8 @@ def _end_record():
 
 _datasets = {
     'fireball': [],      # [{'label': 'Fireball', 'trace': [...], 'source': 'you' | tester name}]
-    'friend_test': [],   # [{'tester': str, 'trace': [...], 'added_to_training': bool}]
+    'friend_test': [],   # [{'tester': str, 'trace': [...], 'added_to_training': bool,
+                         #   'cropped': bool}]  # 'cropped' added lazily by Lesson 5
     'mystery': [],       # [{'trace': [...]}]
 }
 
@@ -252,6 +256,10 @@ def _refresh_counts():
         el = document.getElementById(el_id)
         if el:
             el.innerText = str(len(_datasets[key]))
+    btn = document.getElementById('btn-lwho-train')
+    if btn:
+        traces, labels = _caster_training_data()
+        btn.disabled = len(set(labels)) < 2 or len(traces) < 6
 
 
 # ══════════════════════════════════════════════════════════════
@@ -453,7 +461,87 @@ def l3_reset(e=None):
 
 
 # ══════════════════════════════════════════════════════════════
-# LESSON 4 — Improve It: Data Cleaning (trim leading dead-time from
+# LESSON 4 — Who Cast It? (multi-class caster-identity classification —
+# a different question from Lessons 1-3's "is this a Fireball?": here the
+# AI is trained to recognize WHO cast it. Reuses recordings already made
+# in Lessons 1-2, so there's no new capture step, just a second,
+# independent classifier (knn_caster) trained on caster-identity labels
+# instead of spell labels. knn_fireball is untouched.)
+# ══════════════════════════════════════════════════════════════
+
+knn_caster = None  # KNNClassifier, set once this lesson's "Train" button is clicked
+_lwho_results = []
+
+def _caster_training_data():
+    """Pool (trace, caster_label) pairs for the identity classifier: 'you'
+    from Lesson 1's examples, plus every Lesson 2 friend test cast labeled
+    by that tester's name (one class per distinct name recorded, so a
+    class that tested multiple friends gets a multi-way classifier).
+    Deliberately reads _datasets['friend_test'] rather than any
+    post-Lesson-3-merge copies in _datasets['fireball'], so this doesn't
+    depend on Lesson 3 having been completed and never double-counts a
+    cast that Lesson 3 already merged in."""
+    traces, labels = [], []
+    for ex in _datasets['fireball']:
+        if ex['source'] == 'you':
+            traces.append(ex['trace'])
+            labels.append('you')
+    for rec in _datasets['friend_test']:
+        traces.append(rec['trace'])
+        labels.append(rec['tester'])
+    return traces, labels
+
+def lwho_train(e=None):
+    global knn_caster
+    traces, labels = _caster_training_data()
+    n_casters = len(set(labels))
+    if n_casters < 2:
+        log("Record at least one Lesson 2 friend test cast first — need two different casters to compare.")
+        return
+    if len(traces) < 6:
+        log(f"Only {len(traces)} example(s) so far — record a few more casts (yours and your friend's) in Lessons 1-2 first.")
+        return
+    knn_caster = KNNClassifier(k=min(3, len(traces)))
+    knn_caster.fit(traces, labels)
+    casters = ', '.join(sorted(set(labels)))
+    log(f"Trained to recognize {n_casters} caster(s) ({casters}) from {len(traces)} example(s).")
+    check_ready()
+
+def lwho_cast_start(e=None):
+    if knn_caster is None:
+        log("Train the identity classifier first.")
+        return
+    _begin_record('lwho-cast')
+
+def lwho_cast_stop(e=None):
+    trace = _end_record()
+    if trace is None:
+        return
+    if knn_caster is None:
+        log("Train the identity classifier first.")
+        return
+    actual_el = document.getElementById('lwho-actual-name')
+    actual = (actual_el.value or '?').strip() if actual_el else '?'
+    label, confidence, _ = knn_caster.predict(trace)
+    correct = actual.lower() == label.lower()
+
+    _lwho_results.append({'actual': actual, 'guess': label, 'correct': correct})
+    window.appendResultRow('lwho-results-body',
+                            [actual, label, f"{confidence*100:.0f}%", '✅' if correct else '❌'])
+    hits = sum(1 for r in _lwho_results if r['correct'])
+    total = len(_lwho_results)
+    pct = 100.0 * hits / total
+    window.setResultsSummary('lwho-summary', f"{hits}/{total} correctly identified ({pct:.0f}%)")
+
+def lwho_reset(e=None):
+    _lwho_results.clear()
+    document.getElementById('lwho-results-body').innerHTML = ''
+    window.setResultsSummary('lwho-summary', 'No attempts yet.')
+    log("Cleared Who Cast It? results.")
+
+
+# ══════════════════════════════════════════════════════════════
+# LESSON 5 — Improve It: Data Cleaning (trim leading dead-time from
 # whatever's currently in the Fireball training set — including anything
 # added back in Lesson 3 — then retrain and compare, same before/after
 # pattern as Lesson 3 but for a different kind of data-quality fix).
@@ -521,7 +609,29 @@ def l4_apply_crops(e=None):
         examples[i]['trace'] = original_trace[start_idx:]
         if start_idx > 0:
             changed += 1
-    log(f"Applied crops: trimmed dead time from {changed} of {len(_crop_originals)} example(s).")
+
+    # Also auto-trim dead time from any Lesson 2 friend test casts that
+    # haven't been through this crop pass yet — otherwise Lesson 4's
+    # identity classifier would train 'you' on cleaned data next to
+    # un-cleaned friend data, an unfair/confusing mismatch. Friend casts
+    # aren't shown in this lesson's chart at all, so this applies the same
+    # detect_motion_start heuristic automatically rather than via a manual
+    # marker. 'cropped' guards against re-trimming the same recording every
+    # time this button is clicked again.
+    friend_changed = 0
+    for rec in _datasets['friend_test']:
+        if rec.get('cropped'):
+            continue
+        start_idx = detect_motion_start(rec['trace'])
+        if start_idx > 0:
+            rec['trace'] = rec['trace'][start_idx:]
+            friend_changed += 1
+        rec['cropped'] = True
+
+    msg = f"Applied crops: trimmed dead time from {changed} of {len(_crop_originals)} example(s)."
+    if friend_changed:
+        msg += f" Also auto-trimmed {friend_changed} friend test cast(s) so Lesson 4's identity classifier stays consistent."
+    log(msg)
     document.getElementById('btn-l4-retrain').disabled = False
 
 def l4_retrain(e=None):
@@ -580,7 +690,9 @@ def l4_reset(e=None):
 
 
 # ══════════════════════════════════════════════════════════════
-# LESSON 5 — Discover Hidden Magic Styles (unsupervised learning: k-means)
+# CLASS 2, LESSON 1 — Discover Hidden Magic Styles (unsupervised learning: k-means).
+# Ids stay l5/l6 (unchanged since before the Class 1/2 split) even though
+# they display as "Class 2, Lesson 1/2" now — see index.html's CLASS_LESSONS.
 # ══════════════════════════════════════════════════════════════
 
 km_mystery = None
@@ -691,7 +803,7 @@ def l5_clear(e=None):
 
 
 # ══════════════════════════════════════════════════════════════
-# LESSON 6 — Make New Spells (name the discovered clusters, recognize them)
+# CLASS 2, LESSON 2 — Make New Spells (name the discovered clusters, recognize them)
 # ══════════════════════════════════════════════════════════════
 
 _cluster_names = {}   # {cluster_id: name}
@@ -763,6 +875,7 @@ _START_HANDLERS = {
     'l1-cast': l1_cast_start,
     'l2-cast': l2_cast_start,
     'l3-cast': l3_cast_start,
+    'lwho-cast': lwho_cast_start,
     'l4-cast': l4_cast_start,
     'l5-record': l5_record_start,
     'l6-cast': l6_cast_start,
@@ -772,6 +885,7 @@ _STOP_HANDLERS = {
     'l1-cast': l1_cast_stop,
     'l2-cast': l2_cast_stop,
     'l3-cast': l3_cast_stop,
+    'lwho-cast': lwho_cast_stop,
     'l4-cast': l4_cast_stop,
     'l5-record': l5_record_stop,
     'l6-cast': l6_cast_stop,
