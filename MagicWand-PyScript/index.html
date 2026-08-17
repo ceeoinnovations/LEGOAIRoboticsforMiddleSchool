@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Magic Wand</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%AA%84%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
+<script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+<!-- Fonts match the Engineering with Bricks house style (see their compiled
+     CSS at cdn.prod.website-files.com/.../engineeringwithbricks.webflow.shared*.css) —
+     Droid Sans for headings/buttons, Varela Round for a friendlier accent
+     touch, Inconsolata for anything monospace. Colors below are matched the
+     same way (their --yellow/--brown custom properties). Their logo now
+     appears in the header (images/EngineeringWithBricks.png), alongside
+     the curriculum's own AI School of Magic logo. -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Droid+Sans:wght@400;700&family=Varela+Round&family=Inconsolata:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-color: #f8fafc;
+    --card-bg: #ffffff;
+    --text-primary: #333129;
+    --text-secondary: #6b6552;
+    --accent: #fcd700;
+    --accent-hover: #e6c200;
+    --accent-text: #333129;
+    --success: #10b981;
+    --danger: #ef4444;
+    --border: #e2e8f0;
+    --radius: 16px;
+    /* Matches the "AI School of Magic" placemat deck's Challenge/Think-Like
+       box colors, darkened slightly from the deck's pink/teal for 4.5:1+
+       contrast on white (see feedback-wcag-compliance). */
+    --challenge-color: #c3157e;
+    --think-color: #0a6e78;
+  }
+  body {
+    font-family: 'Droid Sans', system-ui, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+  }
+  .header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    max-width: 1200px;
+    margin-bottom: 20px;
+  }
+  .header-text { text-align: center; }
+  .header h1 { margin: 0; font-size: 2.4rem; color: var(--text-primary); font-family: 'Varela Round', 'Droid Sans', sans-serif; }
+  .header p { margin: 8px 0 0; color: var(--text-secondary); }
+  .header-logo-aisom { height: 80px; width: auto; justify-self: start; }
+  .header-logo-ewb { width: 140px; height: auto; justify-self: end; }
+  @media (max-width: 700px) {
+    .header { grid-template-columns: 1fr; justify-items: center; }
+    .header-logo-aisom, .header-logo-ewb { justify-self: center; }
+  }
+
+  .container { display: flex; gap: 20px; width: 100%; max-width: 1200px; }
+  .panel {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  .sidebar { flex: 0 0 240px; min-width: 240px; max-width: 240px; }
+  .main-content { flex: 1; min-width: 0; }
+
+  .device-card {
+    background: #f1f5f9;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .device-info { display: flex; align-items: center; gap: 10px; }
+  .status-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--danger); }
+  .status-dot.connected { background: var(--success); }
+
+  button {
+    background: var(--accent);
+    color: var(--accent-text);
+    border: none;
+    padding: 10px 15px;
+    border-radius: 9px;
+    font-weight: 700;
+    font-family: 'Droid Sans', system-ui, sans-serif;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  button:hover:not(:disabled) { background: var(--accent-hover); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  /* Red/green buttons keep white text — --accent-text (dark brown) is only
+     legible against the yellow --accent background, not against red/green. */
+  button.danger { background: var(--danger); color: white; }
+  button.danger:hover:not(:disabled) { background: #dc2626; }
+
+  .dataset-counts { display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; }
+  .dataset-counts .row { display: flex; justify-content: space-between; color: var(--text-secondary); }
+  .dataset-counts .row b { color: var(--text-primary); font-family: 'Inconsolata', monospace; }
+
+  .terminal {
+    background: #000;
+    color: #10b981;
+    font-family: 'Inconsolata', monospace;
+    font-size: 0.8rem;
+    padding: 12px;
+    border-radius: var(--radius);
+    height: 220px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+  }
+  .terminal div { margin-bottom: 4px; }
+
+  .tab-bar { display: flex; gap: 8px; width: 100%; max-width: 1200px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab-btn {
+    background: var(--card-bg);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .tab-btn:hover:not(:disabled) { background: #f1f5f9; color: var(--text-primary); }
+  .tab-btn.active { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  .page-content.hidden { display: none; }
+
+  h2 { margin: 0 0 4px; }
+  .lesson-intro { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; margin: 0 0 6px; }
+  .subsection { border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 16px; }
+  .subsection:last-of-type { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+  .subsection h3 { margin: 0 0 8px; font-size: 1rem; }
+
+  /* "AI School of Magic" placemat framing (Challenge / Think Like boxes) */
+  .tagline { font-style: italic; color: var(--text-secondary); margin: 0 0 16px; }
+  .challenge-box {
+    border: 2px solid var(--challenge-color);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+  .challenge-box h3 {
+    margin: 0 0 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--challenge-color);
+  }
+  .challenge-box p { margin: 0; }
+  .challenge-box img { display: block; width: 480px; max-width: 100%; height: auto; margin: 10px auto 0; }
+  .think-like-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+  .think-like-box {
+    flex: 1 1 240px;
+    border: 2px solid var(--think-color);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .think-like-box h3 {
+    margin: 0 0 8px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--think-color);
+  }
+  .think-like-box h3 em { font-style: italic; text-decoration: underline; }
+  .think-like-box p { margin: 0; }
+  .building-ideas-grid {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .building-ideas-grid img {
+    max-width: 220px;
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: #fff;
+  }
+
+  /* Tips & Tricks: native <details> gives keyboard toggling (Enter/Space on
+     the focused <summary>) and correct expanded/collapsed semantics for
+     screen readers for free, so it's used as-is rather than a custom
+     JS/ARIA widget. */
+  .tips-tricks {
+    margin-top: 20px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    background: #f8fafc;
+  }
+  .tips-tricks summary {
+    cursor: pointer;
+    font-weight: 700;
+    color: var(--text-secondary);
+  }
+  .tips-tricks summary:hover { color: var(--text-primary); }
+  .tips-tricks[open] summary { margin-bottom: 10px; }
+  .tips-tricks ul {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+  .tips-tricks li { margin-bottom: 6px; }
+  .tips-tricks li:last-child { margin-bottom: 0; }
+
+  /* Press-and-hold record/cast buttons */
+  .record-btn {
+    width: 100%;
+    padding: 16px;
+    font-size: 1.05rem;
+    background: var(--accent);
+    user-select: none;
+    touch-action: none;
+  }
+  .record-btn.recording {
+    background: var(--danger);
+    color: white;
+    animation: recordPulse 1s infinite;
+  }
+  @keyframes recordPulse {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+    70% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  }
+
+  .trace-canvas {
+    width: 100%;
+    height: 70px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-top: 8px;
+    display: block;
+  }
+
+  .slider-group { display: flex; flex-direction: column; gap: 5px; margin: 10px 0; }
+  .slider-group label { font-size: 0.9rem; font-weight: 500; }
+  .slider-group input[type="range"] { width: 100%; }
+  .slider-group input[type="text"] { font-family: inherit; font-size: 0.95rem; }
+
+  input[type="text"] {
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    font-family: inherit;
+    font-size: 0.95rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .badge {
+    display: block;
+    padding: 14px 16px;
+    border-radius: var(--radius);
+    font-weight: 700;
+    font-size: 1.05rem;
+    text-align: center;
+    margin-top: 10px;
+  }
+  .badge-neutral { background: #f1f5f9; color: var(--text-secondary); font-weight: 500; }
+  .badge-success { background: rgba(16, 185, 129, 0.15); color: #047857; }
+  .badge-fail { background: rgba(239, 68, 68, 0.15); color: #b91c1c; }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th, td { padding: 8px 10px; text-align: center; border: 1px solid var(--border); font-size: 0.9rem; }
+  th { background: #f1f5f9; color: var(--text-secondary); font-weight: 600; }
+  td { font-family: 'Inconsolata', monospace; }
+  .table-wrap { max-height: 220px; overflow-y: auto; border-radius: 8px; }
+
+  .results-summary { margin-top: 8px; font-weight: 600; color: var(--text-primary); }
+
+  .ba-bar-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+  .ba-bar-row span { width: 90px; font-size: 0.85rem; color: var(--text-secondary); flex-shrink: 0; }
+  .ba-bar-track { flex: 1; background: #f1f5f9; border-radius: 6px; height: 18px; overflow: hidden; }
+  .ba-bar-fill { height: 100%; width: 0%; transition: width 0.4s ease; border-radius: 6px; }
+  .ba-before { background: #94a3b8; }
+  .ba-after { background: var(--success); }
+
+  .actions-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+
+  #l5-scatter-canvas, #l6-naming-container { margin-top: 10px; }
+  #l5-scatter-canvas { border: 1px solid var(--border); border-radius: 8px; background: #f8fafc; width: 100%; max-width: 420px; height: 300px; }
+
+  .overlay-canvas {
+    width: 100%;
+    height: 260px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-top: 8px;
+    display: block;
+  }
+
+  /* Lesson 4 (Data Cleaning) crop tool: one card per recorded example */
+  .crop-example {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 10px;
+    background: #f8fafc;
+  }
+  .crop-example-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .crop-example-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .crop-delete-btn {
+    background: transparent;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .crop-delete-btn:hover:not(:disabled) {
+    background: var(--danger);
+    color: white;
+  }
+  .crop-canvas {
+    width: 100%;
+    height: 90px;
+    display: block;
+    cursor: ew-resize;
+    touch-action: none;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .crop-example input[type="range"] {
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  /* ── Browser compatibility warning (Web Bluetooth) ──────────────
+     Colors/structure ported from ~/Documents/GitHub/NeuralNetworkEducation's
+     network-trainer app's .ble-warning-banner. Unlike that app, there's no
+     virtual-controller fallback here — this activity needs the wand's real
+     IMU, so the banner is not dismissible and says plainly that the lessons
+     can't run rather than implying a workaround exists. */
+  .ble-warning-banner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #fef3c7;
+    border: 1.5px solid #fde68a;
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    width: 100%;
+    max-width: 1200px;
+    box-sizing: border-box;
+    margin-bottom: 16px;
+  }
+  .ble-warning-banner.hidden { display: none; }
+  .ble-warning-icon { font-size: 1.4rem; flex-shrink: 0; }
+  .ble-warning-text { font-size: 0.9rem; line-height: 1.5; color: #8a5a08; }
+  .ble-warning-text strong { color: #8a5a08; }
+</style>
+</head>
+<body>
+
+<div id="ble-warning-banner" class="ble-warning-banner hidden">
+  <span class="ble-warning-icon">&#9888;&#65039;</span>
+  <span class="ble-warning-text">
+    <strong>This browser can't connect to the wand.</strong>
+    Web Bluetooth is needed to talk to the LEGO hub, and it's only available in Chrome or Edge on a
+    computer or Android phone — not Safari, not iPhone/iPad, not Firefox. Every lesson on this page
+    needs the wand's real motion sensor, so please reopen this page in Chrome or Edge to continue.
+  </span>
+</div>
+
+<div class="header">
+  <img class="header-logo-aisom" src="images/AISchoolofMagicLogo.png" alt="AI School of Magic logo">
+  <div class="header-text">
+    <h1>&#10024; Magic Wand</h1>
+    <p>Teach your LEGO&reg; wand to recognize spells using its built-in motion sensor.</p>
+  </div>
+  <img class="header-logo-ewb" src="images/EngineeringWithBricks.png" alt="Engineering with Bricks logo">
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" id="tab-btn-l0" onclick="switchLessonPage('l0')">0. Build Your Wand</button>
+  <button class="tab-btn" id="tab-btn-l1" onclick="switchLessonPage('l1')">1. Teach a Spell</button>
+  <button class="tab-btn" id="tab-btn-l2" onclick="switchLessonPage('l2')">2. Friend Test</button>
+  <button class="tab-btn" id="tab-btn-l3" onclick="switchLessonPage('l3')">3. Data Bias</button>
+  <button class="tab-btn" id="tab-btn-l4" onclick="switchLessonPage('l4')">4. Data Cleaning</button>
+  <button class="tab-btn" id="tab-btn-l5" onclick="switchLessonPage('l5')">5. Hidden Styles</button>
+  <button class="tab-btn" id="tab-btn-l6" onclick="switchLessonPage('l6')">6. New Spells</button>
+</div>
+
+<div class="container">
+  <div class="panel sidebar">
+    <h2>Your Wand</h2>
+    <div class="device-card">
+      <div class="device-info">
+        <div class="status-dot" id="dm-dot"></div>
+        <div>Double Motor</div>
+      </div>
+      <div>
+        <button id="btn-connect-dm" py-click="connect_dm">Connect</button>
+        <button id="btn-disconnect-dm" class="danger" py-click="disconnect_dm" style="display:none; padding: 10px 10px;" title="Disconnect">&#10005;</button>
+      </div>
+    </div>
+
+    <h3 style="margin-bottom: 0;">Recorded Motions</h3>
+    <div class="dataset-counts">
+      <div class="row"><span>Fireball examples</span><b id="count-fireball">0</b></div>
+      <div class="row"><span>Friend test casts</span><b id="count-friend-test">0</b></div>
+      <div class="row"><span>Mystery motions</span><b id="count-mystery">0</b></div>
+    </div>
+ <button id="btn-l1-clear" class="danger" py-click="l1_clear">Clear Training Data</button>
+
+    <h3 style="margin-bottom: 0;">Logs</h3>
+    <div class="terminal" id="terminal"></div>
+  </div>
+
+  <!-- Lesson 0 -->
+  <div class="page-content" id="page-l0">
+    <div class="panel main-content">
+      <h2>Lesson 0: Build Your Wand</h2>
+      <p class="tagline">AI isn't magic — but it can look like magic until you understand it.</p>
+
+
+      <div class="challenge-box">
+        <h3>Challenge</h3>
+        <p>Build a magic wand and create different types of spells!</p>
+	<img src="images/brick_magic_wand.png"  loading="lazy"
+            alt="Two brick characters holding magic wands with stars">
+      </div>
+
+      <div class="think-like-row">
+        <div class="think-like-box">
+          <h3>Think like <em>an engineer</em></h3>
+          <p>What motions are the easiest / hardest to tell apart?</p>
+        </div>
+        <div class="think-like-box">
+          <h3>Think like <em>a data scientist</em></h3>
+          <p>How many examples do you need for good accuracy?</p>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3 style="color: var(--text-secondary);">&#128161; Building Ideas</h3>
+        <div class="building-ideas-grid">
+          <img src="images/wand-build-1.png" loading="lazy"
+            alt="Double Motor built into an angled wand with a row of beams and axle-holes down the shaft">
+          <img src="images/wand-build-2.png" loading="lazy"
+            alt="Double Motor with a long thin axle extension, like a wand or selfie stick">
+          <img src="images/wand-build-3.png" loading="lazy"
+            alt="Double Motor with a beam-and-axle handle and a red accent piece marking the grip">
+        </div>
+      </div>
+      <div class="subsection">
+        <h3>Hardware checklist</h3>
+        <ul class="lesson-intro" style="padding-left: 20px; margin: 0;">
+          <li>Double Motor is charged and powered on.</li>
+          <li>Double Motor is attached to your wand's
+            housing/handle <b>securely</b>, oriented consistently
+            (pick a "forward" direction for the wand tip and stick
+            with it — it makes gestures easier to repeat the same way
+            each time).</li>
+          <li>Press the double motor light/button to make it blink and
+	    tap your connection card. The light will turn the color of
+	    your card.  This makes it easier to tell apart from the
+	    other Double Motors when you go to connect it.
+	  </li>
+	  <li> Now press the double motor light/button again. It
+	  should stay the color of your card, but blink and beep. Now
+	  it's ready to connect with the yellow "Connect" button in
+	  the top left of this website!</li>
+        </ul>
+      </div>
+
+      <details class="tips-tricks">
+        <summary>Tips &amp; Tricks</summary>
+        <ul>
+          <li>If the Bluetooth connection keeps failing, try moving the Double Motor closer to your computer,
+            away from other Bluetooth devices in the room.</li>
+          <li>The light needs to be blinking <em>and</em> beeping before it'll show up in the browser's device
+            picker — one press just sets the color, the second press arms it for connecting.</li>
+          <li>Pick a wand grip you can hold the exact same way every time. Inconsistent grip is the #1 cause of
+            "spell not recognized" later on.</li>
+        </ul>
+      </details>
+    </div>
+  </div>
+
+  <!-- Lesson 1 -->
+  <div class="page-content hidden" id="page-l1">
+    <div class="panel main-content">
+      <h2>Lesson 1: Teach Your Wand a Spell</h2>
+      <p class="tagline">AI isn't magic — but it can look like magic until you understand it.</p>
+
+      <div class="challenge-box">
+        <h3>Challenge</h3>
+        <p>Teach your wand to recognize one spell, just by showing it examples!</p>
+      </div>
+
+      <div class="think-like-row">
+        <div class="think-like-box">
+          <h3>Think Like <em>a teacher</em></h3>
+          <p>How many examples does a student need before they really learn something?</p>
+        </div>
+        <div class="think-like-box">
+          <h3>Think Like <em>a scientist</em></h3>
+          <p>What happens to accuracy if your examples don't look like each other?</p>
+        </div>
+      </div>
+
+      <p class="lesson-intro"> You are going to show the AI several
+      examples of ONE spell — "Fireball". Hold the button below, do
+      your Fireball motion with the wand, then let go. Do this 6-8
+      times, trying to repeat roughly the same motion.</p>
+      <div class="subsection">
+        <h3>Step 1: Record examples</h3>
+        <button class="record-btn" id="btn-l1-record" disabled
+                onmousedown="wandRecordStart('l1-record')" onmouseup="wandRecordStop('l1-record')"
+                onkeydown="wandKeyDown(event, 'l1-record')" onkeyup="wandKeyUp(event, 'l1-record')"
+                onmouseleave="wandRecordCancel('l1-record')"
+                ontouchstart="event.preventDefault(); wandRecordStart('l1-record')"
+                ontouchend="event.preventDefault(); wandRecordStop('l1-record')">
+          Hold &amp; Cast "Fireball" to Record
+        </button>
+        <canvas class="trace-canvas" id="trace-canvas-l1-record" width="600" height="70" aria-hidden="true"></canvas>
+      </div>
+
+      <div class="subsection">
+        <h3>Step 2: Train the wand</h3>
+	<p> Click the training button once - you'll see a message in the Logs window to the right that confirms it's working.  If you want to start over, click the "Clear Training Data" button in the left sidebar. </p>
+        <button id="btn-l1-train" py-click="l1_train" disabled>Train Wand</button>
+       </div>
+      <div class="subsection">
+        <h3>Step 3: Try casting it!</h3>
+        <div class="slider-group">
+          <label>Recognition threshold: <span id="l1-threshold-val">50</span>%</label>
+          <input type="range" id="l1-threshold" min="0" max="100" step="5" value="50"
+                 oninput="document.getElementById('l1-threshold-val').innerText = this.value">
+        </div>
+        <button class="record-btn" id="btn-l1-cast" disabled
+                onmousedown="wandRecordStart('l1-cast')" onmouseup="wandRecordStop('l1-cast')"
+                onkeydown="wandKeyDown(event, 'l1-cast')" onkeyup="wandKeyUp(event, 'l1-cast')"
+                onmouseleave="wandRecordCancel('l1-cast')"
+                ontouchstart="event.preventDefault(); wandRecordStart('l1-cast')"
+                ontouchend="event.preventDefault(); wandRecordStop('l1-cast')">
+          Hold &amp; Cast Spell!
+        </button>
+        <canvas class="trace-canvas" id="trace-canvas-l1-cast" width="600" height="70" aria-hidden="true"></canvas>
+        <div class="badge badge-neutral" id="l1-cast-result">Train the wand to try casting.</div>
+      </div>
+
+      <div class="subsection">
+        <h3>Compare your examples</h3>
+        <p class="lesson-intro" style="margin-bottom: 0;">Every recorded example, lined up on the same real-time
+          clock (not stretched to match) — this is the raw motion data the AI is learning from. A dashed black line
+          shows your most recent test cast. Do your examples look like each other? Does your test cast look like
+          them? If some lines sit flat for a while before the spike, that's dead time at the start of the
+          recording — holding the button a beat before actually casting.</p>
+        <p class="lesson-intro" id="l1-overlay-canvas-empty" style="margin-top: 8px;">Record some examples to see them compared here.</p>
+        <canvas class="overlay-canvas" id="l1-overlay-canvas" width="900" height="260" style="display: none;"></canvas>
+      </div>
+
+      <details class="tips-tricks">
+        <summary>Tips &amp; Tricks</summary>
+        <ul>
+          <li>If your cast never gets recognized, try lowering the Recognition threshold slider a little before
+            deciding your training data is the problem.</li>
+          <li>Look at the "Compare your examples" chart — if your lines don't overlap much, that's likely why
+            training or recognition isn't working well.</li>
+          <li>Hold the button a beat before you start moving, and let go right after you finish. Extra dead time
+            at the start or end makes each recording harder to match.</li>
+        </ul>
+      </details>
+    </div>
+  </div>
+
+  <!-- Lesson 2 -->
+  <div class="page-content hidden" id="page-l2">
+    <div class="panel main-content">
+      <h2>Lesson 2: Can Your Friend Use It?</h2>
+      <p class="tagline">AI isn't magic — but it can look like magic until you understand it.</p>
+
+      <div class="challenge-box">
+        <h3>Challenge</h3>
+        <p>Can your friend use your gesture to do your spell?</p>
+	<img src="images/MagicWandFriend.png" loading="lazy"
+            alt="Two brick characters with a wand and a question mark between them">
+      </div>
+
+      <div class="think-like-row">
+        <div class="think-like-box">
+          <h3>Think Like <em>a programmer</em></h3>
+          <p>How many new examples from your friend will you need?</p>
+        </div>
+        <div class="think-like-box">
+          <h3>Think Like <em>a dancer?</em></h3>
+          <p>What makes two movements the same from different bodies?</p>
+        </div>
+      </div>
+
+      <p class="lesson-intro">Hand the wand to a friend — someone who never trained it. Do NOT retrain anything on
+        this page. Just see how well the spell YOU taught it works for someone else. This is where AI bias shows
+        up: a model trained on only one person's motion may not generalize to everyone.</p>
+
+      <div class="subsection">
+        <label for="l2-tester-name" style="font-weight: 600; font-size: 0.9rem;">Tester's name:</label>
+        <input type="text" id="l2-tester-name" placeholder="e.g. Alex" value="Friend">
+      </div>
+
+      <div class="subsection">
+        <button class="record-btn" id="btn-l2-cast" disabled
+                onmousedown="wandRecordStart('l2-cast')" onmouseup="wandRecordStop('l2-cast')"
+                onkeydown="wandKeyDown(event, 'l2-cast')" onkeyup="wandKeyUp(event, 'l2-cast')"
+                onmouseleave="wandRecordCancel('l2-cast')"
+                ontouchstart="event.preventDefault(); wandRecordStart('l2-cast')"
+                ontouchend="event.preventDefault(); wandRecordStop('l2-cast')">
+          Hold &amp; Cast Fireball!
+        </button>
+        <canvas class="trace-canvas" id="trace-canvas-l2-cast" width="600" height="70" aria-hidden="true"></canvas>
+      </div>
+
+      <div class="subsection">
+        <h3>Results</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Tester</th><th>Recognized?</th><th>Confidence</th></tr></thead>
+            <tbody id="l2-results-body"></tbody>
+          </table>
+        </div>
+        <div class="results-summary" id="l2-summary">No attempts yet.</div>
+        <div class="actions-row">
+          <button id="btn-l2-reset" class="danger" py-click="l2_reset">Reset Results (New Tester)</button>
+        </div>
+      </div>
+
+      <details class="tips-tricks">
+        <summary>Tips &amp; Tricks</summary>
+        <ul>
+          <li>It's normal for a friend's spell to fail here — that's the whole point of this step, not a bug.</li>
+          <li>Don't retrain after a failed attempt. The low accuracy IS the data you need for Lesson 3.</li>
+          <li>Try a few different testers if you have them. One low score could be a fluke; three low scores is
+            a pattern.</li>
+        </ul>
+      </details>
+    </div>
+  </div>
+
+  <!-- Lesson 3 -->
+  <div class="page-content hidden" id="page-l3">
+    <div class="panel main-content">
+      <h2>Lesson 3: Improve It — Data Bias</h2>
+      <p class="tagline">AI isn't magic — but it can look like magic until you understand it.</p>
+
+      <div class="challenge-box">
+        <h3>Challenge</h3>
+        <p>Fix the bias — retrain your wand so it works for your friend too!</p>
+      </div>
+
+      <div class="think-like-row">
+        <div class="think-like-box">
+          <h3>Think Like <em>an engineer</em></h3>
+          <p>Did adding a few examples fix it, or do you need a lot more?</p>
+        </div>
+        <div class="think-like-box">
+          <h3>Think Like <em>a teacher</em></h3>
+          <p>Is one friend's data enough, or should you ask a whole group?</p>
+        </div>
+      </div>
+
+      <p class="lesson-intro">Fine-tune the model: add your friend's Lesson 2 attempts into the training set, then
+        retrain, then test again. Does the wand recognize your friend's spell better now? This fixes <em>who's</em>
+        represented in the training data — Lesson 4 tackles a different kind of data problem.</p>
+
+      <div class="subsection">
+        <div class="actions-row">
+          <button id="btn-l3-add" py-click="l3_add_to_training">Add Friend's Examples to Training</button>
+          <button id="btn-l3-retrain" py-click="l3_retrain" disabled>Retrain Wand</button>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Test again</h3>
+        <button class="record-btn" id="btn-l3-cast" disabled
+                onmousedown="wandRecordStart('l3-cast')" onmouseup="wandRecordStop('l3-cast')"
+                onkeydown="wandKeyDown(event, 'l3-cast')" onkeyup="wandKeyUp(event, 'l3-cast')"
+                onmouseleave="wandRecordCancel('l3-cast')"
+                ontouchstart="event.preventDefault(); wandRecordStart('l3-cast')"
+                ontouchend="event.preventDefault(); wandRecordStop('l3-cast')">
+          Hold &amp; Cast Fireball!
+        </button>
+        <canvas class="trace-canvas" id="trace-canvas-l3-cast" width="600" height="70" aria-hidden="true"></canvas>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Tester</th><th>Recognized?</th><th>Confidence</th></tr></thead>
+            <tbody id="l3-results-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Before vs. After</h3>
+        <div class="ba-bar-row">
+          <span id="l3-before-label">Before: --</span>
+          <div class="ba-bar-track"><div class="ba-bar-fill ba-before" id="l3-before-bar"></div></div>
+        </div>
+        <div class="ba-bar-row">
+          <span id="l3-after-label">After: --</span>
+          <div class="ba-bar-track"><div class="ba-bar-fill ba-after" id="l3-after-bar"></div></div>
+        </div>
+        <div class="actions-row">
+          <button id="btn-l3-reset" class="danger" py-click="l3_reset">Reset Retest Results</button>
+        </div>
+      </div>
+
+      <details class="tips-tricks">
+        <summary>Tips &amp; Tricks</summary>
+        <ul>
+          <li>Compare the Before/After bars carefully — if After isn't much higher, adding more of your friend's
+            examples (not just one) may help more than retraining again on the same one.</li>
+          <li>Retraining doesn't erase your original examples — it just adds the new ones to the mix.</li>
+          <li>If accuracy barely changes, it might not only be a "diversity" problem — check whether Lesson 4's
+            data cleaning issue is also present.</li>
+        </ul>
+      </details>
+    </div>
+  </div>
+
+  <!-- Lesson 4 -->
+  <div class="page-content hidden" id="page-l4">
+    <div class="panel main-content">
+      <h2>Lesson 4: Improve It — Data Cleaning</h2>
+      <p class="tagline">AI isn't magic — but it can look like magic until you understand it.</p>
+
+      <div class="challenge-box">
+        <h3>Challenge</h3>
+        <p>Clean up your training data — trim the dead time before the real spell begins!</p>
+      </div>
+
+      <div class="think-like-row">
+        <div class="think-like-box">
+          <h3>Think Like <em>an editor</em></h3>
+          <p>How do you decide where the "real" motion actually starts?</p>
+        </div>
+        <div class="think-like-box">
+          <h3>Think Like <em>a data scientist</em></h3>
+          <p>Could cleaning data help even more than adding more of it?</p>
+        </div>
+      </div>
+
+      <p class="lesson-intro">Even good training data can be messy. If you held the button for a moment before
+        actually casting, your recordings include "dead time" at the start — flat, motionless samples that don't
+        represent the spell at all. This fixes <em>how clean</em> each individual recording is, a different problem
+        from Lesson 3's data diversity fix.</p>
+
+      <div class="subsection">
+        <h3>Step 1: Review the suggested crop points</h3>
+        <p class="lesson-intro" style="margin-bottom: 0;">Each example below shows a suggested starting point
+          (the app's best guess at where the real motion begins), shaded red for the part that would get trimmed
+          away. Drag the marker directly on the chart, or use the slider underneath it, to move the start point —
+          for keyboard users, the slider is fully operable with arrow keys.</p>
+        <button id="btn-l4-load-examples" py-click="l4_load_examples" style="margin-top: 10px;">Load My Examples</button>
+        <p class="lesson-intro" id="l4-crop-container-empty" style="margin-top: 8px;">Click "Load My Examples" to see each recorded example with a suggested crop point.</p>
+        <div id="l4-crop-container"></div>
+      </div>
+
+      <div class="subsection">
+        <h3>Step 2: Apply and retrain</h3>
+        <div class="actions-row">
+          <button id="btn-l4-apply-crops" py-click="l4_apply_crops" disabled>Apply Crops</button>
+          <button id="btn-l4-retrain" py-click="l4_retrain" disabled>Retrain Wand</button>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Step 3: Test again</h3>
+        <button class="record-btn" id="btn-l4-cast" disabled
+                onmousedown="wandRecordStart('l4-cast')" onmouseup="wandRecordStop('l4-cast')"
+                onkeydown="wandKeyDown(event, 'l4-cast')" onkeyup="wandKeyUp(event, 'l4-cast')"
+                onmouseleave="wandRecordCancel('l4-cast')"
+                ontouchstart="event.preventDefault(); wandRecordStart('l4-cast')"
+                ontouchend="event.preventDefault(); wandRecordStop('l4-cast')">
+          Hold &amp; Cast Fireball!
+        </button>
+        <canvas class="trace-canvas" id="trace-canvas-l4-cast" width="600" height="70" aria-hidden="true"></canvas>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Attempt</th><th>Recognized?</th><th>Confidence</th></tr></thead>
+            <tbody id="l4-results-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Before vs. After</h3>
+        <div class="ba-bar-row">
+          <span id="l4-before-label">Before: --</span>
+          <div class="ba-bar-track"><div class="ba-bar-fill ba-before" id="l4-before-bar"></div></div>
+        </div>
+        <div class="ba-bar-row">
+          <span id="l4-after-label">After: --</span>
+          <div class="ba-bar-track"><div class="ba-bar-fill ba-after" id="l4-after-bar"></div></div>
+        </div>
+        <div class="actions-row">
+          <button id="btn-l4-reset" class="danger" py-click="l4_reset">Reset Retest Results</button>
+        </div>
+      </div>
+
+      <details class="tips-tricks">
+        <summary>Tips &amp; Tricks</summary>
+        <ul>
+          <li>The suggested crop point is a guess, not a rule — trust what you see in the chart over the
+            automatic suggestion if they disagree.</li>
+          <li>Cropping too aggressively can cut off the real spell motion, not just the dead time. If accuracy
+            gets worse after applying crops, try dragging the marker back a bit.</li>
+          <li>You can revisit "Load My Examples" any time to re-check your crops before retraining again.</li>
+        </ul>
+      </details>
+    </div>
+  </div>
+
+  <!-- Lesson 5 -->
+  <div class="page-content hidden" id="page-l5">
+    <div class="panel main-content">
+      <h2>Lesson 5: Discover Hidden Magic Styles</h2>
+      <p class="tagline">AI isn't magic — but it can look like magic until you understand it.</p>
+
+      <div class="challenge-box">
+        <h3>Challenge</h3>
+        <p>Let the AI find its own groups — no labels, no hints!</p>
+      </div>
+
+      <div class="think-like-row">
+        <div class="think-like-box">
+          <h3>Think Like <em>a scientist</em></h3>
+          <p>How would you group the motions if a computer couldn't help you?</p>
+        </div>
+        <div class="think-like-box">
+          <h3>Think Like <em>a detective</em></h3>
+          <p>Can you guess how many hidden groups there are before the AI tells you?</p>
+        </div>
+      </div>
+
+      <p class="lesson-intro">Unsupervised learning: record several different mystery motions — don't tell the AI
+        (or each other!) what they're supposed to be. A teacher can secretly assign 2-3 different motions across the
+        class. Then let the AI find its own groups, with no labels at all.</p>
+
+      <div class="subsection">
+        <h3>Step 1: Record mystery motions</h3>
+        <button class="record-btn" id="btn-l5-record" disabled
+                onmousedown="wandRecordStart('l5-record')" onmouseup="wandRecordStop('l5-record')"
+                onkeydown="wandKeyDown(event, 'l5-record')" onkeyup="wandKeyUp(event, 'l5-record')"
+                onmouseleave="wandRecordCancel('l5-record')"
+                ontouchstart="event.preventDefault(); wandRecordStart('l5-record')"
+                ontouchend="event.preventDefault(); wandRecordStop('l5-record')">
+          Hold &amp; Do a Mystery Motion
+        </button>
+        <canvas class="trace-canvas" id="trace-canvas-l5-record" width="600" height="70" aria-hidden="true"></canvas>
+      </div>
+
+      <div class="subsection">
+        <h3>Step 2: Combine with classmates (optional)</h3>
+        <p class="lesson-intro" style="margin-bottom: 0;">To find patterns across the whole class, everyone's
+          mystery motions need to end up on the same page. Each person records on their own wand/laptop, exports
+          their motions as a file, then hands that file to whoever will run "Find Patterns" (Google Drive, your
+          classroom app, email — however files normally get handed in) — that person imports everyone's files
+          before moving on to Step 3.</p>
+        <div class="slider-group">
+          <label for="l5-student-name">Your name (used in the exported file):</label>
+          <input type="text" id="l5-student-name" placeholder="e.g. Alex">
+        </div>
+        <div class="actions-row">
+          <button id="btn-l5-export" py-click="l5_export_motions">Export My Motions</button>
+          <button id="btn-l5-import" onclick="document.getElementById('l5-import-input').click()">Import Motions from File(s)</button>
+          <input type="file" id="l5-import-input" accept="application/json,.json" multiple
+                 style="display:none" onchange="wandImportMotions('l5-import-input')">
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Step 3: Find the patterns</h3>
+        <div class="slider-group">
+          <label>Number of groups to look for: <span id="l5-k-val">3</span></label>
+          <input type="range" id="l5-k" min="2" max="6" step="1" value="3"
+                 oninput="document.getElementById('l5-k-val').innerText = this.value">
+        </div>
+        <div class="actions-row">
+          <button id="btn-l5-find-patterns" py-click="l5_find_patterns" disabled>Find Patterns</button>
+          <button id="btn-l5-clear" class="danger" py-click="l5_clear">Clear Mystery Motions</button>
+        </div>
+        <canvas id="l5-scatter-canvas" width="420" height="300"></canvas>
+        <p style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 4px;">
+          Each dot is one recorded motion, colored by which group the AI put it in. Position shows a simplified
+          2D view (how big vs. how twisty the motion was) — the AI itself actually compares the full motion shape,
+          not just these two numbers.
+        </p>
+        <div class="results-summary" id="l5-summary">No patterns found yet.</div>
+      </div>
+
+      <details class="tips-tricks">
+        <summary>Tips &amp; Tricks</summary>
+        <ul>
+          <li>Try to make each mystery motion clearly different from your others — very similar motions are
+            harder for the AI (and you) to tell apart on the scatter plot.</li>
+          <li>If the "Number of groups" slider doesn't match how many groups you actually recorded, try a few
+            different values and see which one splits the dots most cleanly.</li>
+          <li>The 2D scatter plot is a simplified view — two dots that look close together might actually
+            represent fairly different motions.</li>
+        </ul>
+      </details>
+    </div>
+  </div>
+
+  <!-- Lesson 6 -->
+  <div class="page-content hidden" id="page-l6">
+    <div class="panel main-content">
+      <h2>Lesson 6: Make New Spells</h2>
+      <p class="tagline">AI isn't magic — but it can look like magic until you understand it.</p>
+
+      <div class="challenge-box">
+        <h3>Challenge</h3>
+        <p>Turn the AI's discoveries into brand-new spells you can cast!</p>
+      </div>
+
+      <div class="think-like-row">
+        <div class="think-like-box">
+          <h3>Think Like <em>a wizard</em></h3>
+          <p>What would you call a motion the AI grouped together, before you even tried it?</p>
+        </div>
+        <div class="think-like-box">
+          <h3>Think Like <em>an engineer</em></h3>
+          <p>How would you test that your new spell actually works reliably?</p>
+        </div>
+      </div>
+
+      <p class="lesson-intro">Use the groups the AI discovered in Lesson 5 as brand-new spell categories. Give each
+        group a name, save them, then cast your new spells — the wand will light up and beep differently for each
+        one it recognizes.</p>
+
+      <div class="subsection">
+        <button id="btn-l6-load-clusters" py-click="l6_load_clusters" disabled>Load Clusters from Lesson 5</button>
+        <div id="l6-naming-container"></div>
+        <button id="btn-l6-save-names" py-click="l6_save_names" disabled style="margin-top: 10px;">Save Spell Names</button>
+      </div>
+
+      <div class="subsection">
+        <h3>Cast your new spells</h3>
+        <button class="record-btn" id="btn-l6-cast" disabled
+                onmousedown="wandRecordStart('l6-cast')" onmouseup="wandRecordStop('l6-cast')"
+                onkeydown="wandKeyDown(event, 'l6-cast')" onkeyup="wandKeyUp(event, 'l6-cast')"
+                onmouseleave="wandRecordCancel('l6-cast')"
+                ontouchstart="event.preventDefault(); wandRecordStart('l6-cast')"
+                ontouchend="event.preventDefault(); wandRecordStop('l6-cast')">
+          Hold &amp; Cast!
+        </button>
+        <canvas class="trace-canvas" id="trace-canvas-l6-cast" width="600" height="70" aria-hidden="true"></canvas>
+        <div class="badge badge-neutral" id="l6-cast-result">Name and save your spells to try casting.</div>
+      </div>
+
+      <details class="tips-tricks">
+        <summary>Tips &amp; Tricks</summary>
+        <ul>
+          <li>Give each spell a name before saving — you can always rename and re-save later if you change your
+            mind.</li>
+          <li>If a spell isn't being recognized, go back and check whether Lesson 5 grouped that motion cleanly,
+            or if it overlapped with another group.</li>
+          <li>Cast slowly and deliberately at first, then try a fast or sloppy version — see whether the wand
+            still finds the right spell.</li>
+        </ul>
+      </details>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Tab switching ──
+  window.switchLessonPage = function(name) {
+    ['l0', 'l1', 'l2', 'l3', 'l4', 'l5', 'l6'].forEach(function (p) {
+      const el = document.getElementById('page-' + p);
+      const btn = document.getElementById('tab-btn-' + p);
+      if (!el || !btn) return;
+      if (p === name) { el.classList.remove('hidden'); btn.classList.add('active'); }
+      else { el.classList.add('hidden'); btn.classList.remove('active'); }
+    });
+  };
+
+  // ── Press-and-hold record/cast buttons ──
+  // Dispatched as CustomEvents (rather than py-mousedown/py-mouseup) since
+  // only py-click is confirmed reliable for this PyScript release; Python
+  // listens via document.addEventListener in main.py.
+  let activeRecordTarget = null;
+  window.wandRecordStart = function(target) {
+    if (activeRecordTarget) return; // ignore accidental double-holds
+    activeRecordTarget = target;
+    document.dispatchEvent(new CustomEvent('wand-record-start', { detail: { target: target } }));
+  };
+  window.wandRecordStop = function(target) {
+    if (activeRecordTarget !== target) return;
+    activeRecordTarget = null;
+    document.dispatchEvent(new CustomEvent('wand-record-stop', { detail: { target: target } }));
+  };
+  // Keyboard equivalent of press-and-hold, for keyboard-only and
+  // screen-reader users (native <button> click alone can't express "held
+  // down for a duration" — Enter/Space fire a single click, not a
+  // start/stop pair). event.repeat guards against the OS auto-repeating
+  // keydown while a key is held, which would otherwise call start over
+  // and over.
+  window.wandKeyDown = function(event, target) {
+    if (event.repeat) return;
+    if (event.key !== ' ' && event.key !== 'Enter') return;
+    event.preventDefault();
+    window.wandRecordStart(target);
+  };
+  window.wandKeyUp = function(event, target) {
+    if (event.key !== ' ' && event.key !== 'Enter') return;
+    event.preventDefault();
+    window.wandRecordStop(target);
+  };
+  // If the mouse leaves the button while still held down, treat it the same
+  // as letting go (mouseup wouldn't otherwise fire on this element).
+  window.wandRecordCancel = function(target) {
+    if (activeRecordTarget !== target) return;
+    window.wandRecordStop(target);
+  };
+
+  window.setRecordingUI = function(btnId, active) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    if (active) {
+      btn.dataset.originalText = btn.dataset.originalText || btn.innerHTML;
+      btn.classList.add('recording');
+      btn.innerText = '● Recording... let go when done';
+    } else {
+      btn.classList.remove('recording');
+      if (btn.dataset.originalText) btn.innerHTML = btn.dataset.originalText;
+    }
+  };
+
+  window.setBadge = function(elId, kind, text) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.className = 'badge badge-' + kind;
+    el.innerText = text;
+  };
+
+  window.appendResultRow = function(tbodyId, cells) {
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+    const tr = document.createElement('tr');
+    cells.forEach(function (c) {
+      const td = document.createElement('td');
+      td.innerText = c;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+    const wrap = tbody.closest('.table-wrap');
+    if (wrap) wrap.scrollTop = wrap.scrollHeight;
+  };
+
+  window.setResultsSummary = function(elId, text) {
+    const el = document.getElementById(elId);
+    if (el) el.innerText = text;
+  };
+
+  // ── Canvas DPI helper ──
+  // A <canvas> has two independent sizes: its CSS-rendered size (set here by
+  // width:100% in a responsive container) and its bitmap/backing-store size
+  // (the width/height HTML attributes). When those don't match — inevitable
+  // for a responsive canvas whose container can be any width — the browser
+  // stretches the bitmap to fit, which blurs everything drawn on it, worse
+  // on a Retina/HiDPI screen. This resizes the backing store to the canvas's
+  // *actual* on-screen size times devicePixelRatio, and scales the drawing
+  // context so draw calls can keep using CSS-pixel coordinates. Every render
+  // function below calls this first and draws using the returned w/h
+  // (CSS pixels), never canvas.width/canvas.height directly (those are now
+  // the larger, DPR-scaled backing-store size).
+  function prepareCanvas(canvas) {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const cssW = rect.width || canvas.width;
+    const cssH = rect.height || canvas.height;
+    if (canvas._dprCssW !== cssW || canvas._dprCssH !== cssH || canvas._dpr !== dpr) {
+      canvas.width = Math.round(cssW * dpr);
+      canvas.height = Math.round(cssH * dpr);
+      canvas._dprCssW = cssW;
+      canvas._dprCssH = cssH;
+      canvas._dpr = dpr;
+    }
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx: ctx, w: cssW, h: cssH };
+  }
+
+  // ── Live trace preview: strip-chart of accelerometer magnitude ──
+  // Purely decorative/supplementary (marked aria-hidden in the HTML) — the
+  // record button's own text already announces "Recording..." state to
+  // screen readers, and a rapidly-redrawing canvas has no good non-visual
+  // equivalent, so this doesn't attempt an aria-label.
+  const traceHistories = {};
+  window.resetTraceCanvas = function(canvasId) {
+    traceHistories[canvasId] = [];
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = prepareCanvas(canvas).ctx;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  };
+  window.drawTracePreview = function(canvasId, sample) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const mag = Math.sqrt(sample[0] * sample[0] + sample[1] * sample[1] + sample[2] * sample[2]);
+    if (!traceHistories[canvasId]) traceHistories[canvasId] = [];
+    const hist = traceHistories[canvasId];
+    hist.push(mag);
+    if (hist.length > 200) hist.shift();
+
+    const prepared = prepareCanvas(canvas);
+    const ctx = prepared.ctx, w = prepared.w, h = prepared.h;
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
+    if (hist.length > 1) {
+      const maxV = Math.max.apply(null, hist.concat([1]));
+      ctx.strokeStyle = '#7c3aed';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      hist.forEach(function (v, i) {
+        const x = (i / (hist.length - 1)) * w;
+        const y = h - (v / maxV) * (h - 6) - 3;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    }
+  };
+
+  // ── Lesson 1 "compare your examples" overlay chart ──
+  // traces: array of arrays of accel-magnitude floats (one array per
+  // recorded example, RAW elapsed time — deliberately not resampled/warped,
+  // so uneven leading dead-time shows up as different-length flat runs).
+  // currentTrace: same shape, for the most recent test cast, or null/undefined.
+  window.renderExampleOverlay = function(canvasId, traces, sampleInterval, currentTrace) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const emptyMsg = document.getElementById(canvasId + '-empty');
+    canvas.setAttribute('role', 'img');
+
+    const hasCurrent = !!(currentTrace && currentTrace.length > 0);
+    const hasTraces = !!(traces && traces.length > 0);
+    if (!hasTraces && !hasCurrent) {
+      // Real DOM text instead of canvas-drawn text: selectable, screen-reader
+      // visible, and immune to the contrast/blur issues canvas text has.
+      canvas.style.display = 'none';
+      if (emptyMsg) emptyMsg.style.display = '';
+      canvas.setAttribute('aria-label', 'Chart is empty — no examples recorded yet.');
+      return;
+    }
+    canvas.style.display = '';
+    if (emptyMsg) emptyMsg.style.display = 'none';
+    canvas.setAttribute('aria-label',
+      (hasTraces ? traces.length + ' recorded example' + (traces.length === 1 ? '' : 's') : 'No recorded examples') +
+      (hasCurrent ? ', plus your most recent test cast, ' : ' ') +
+      'shown as accelerometer-magnitude lines over time.');
+
+    const prepared = prepareCanvas(canvas);
+    const ctx = prepared.ctx, w = prepared.w, h = prepared.h, pad = 40;
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.beginPath();
+    ctx.moveTo(pad, pad); ctx.lineTo(pad, h - pad); ctx.lineTo(w - pad, h - pad);
+    ctx.stroke();
+
+    const allTraces = hasCurrent ? traces.concat([currentTrace]) : traces;
+    const maxLen = Math.max.apply(null, allTraces.map(function (t) { return t.length; }).concat([2]));
+    const maxDuration = (maxLen - 1) * sampleInterval;
+    const maxMag = Math.max.apply(null, [].concat.apply([1], allTraces));
+
+    const xOf = function (i) { return pad + (i * sampleInterval / (maxDuration || 1)) * (w - 2 * pad); };
+    const yOf = function (v) { return (h - pad) - (v / maxMag) * (h - 2 * pad); };
+
+    const colors = ['#7c3aed', '#ef4444', '#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#14b8a6', '#a855f7'];
+    traces.forEach(function (trace, ti) {
+      if (trace.length === 0) return;
+      ctx.strokeStyle = colors[ti % colors.length];
+      ctx.globalAlpha = 0.6;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      trace.forEach(function (v, i) {
+        const x = xOf(i), y = yOf(v);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      const lastI = trace.length - 1;
+      ctx.fillStyle = colors[ti % colors.length];
+      ctx.font = 'bold 10px monospace';
+      ctx.fillText(String(ti + 1), xOf(lastI) + 4, yOf(trace[lastI]));
+    });
+
+    if (hasCurrent) {
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      currentTrace.forEach(function (v, i) {
+        const x = xOf(i), y = yOf(v);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      ctx.setLineDash([]);
+      const lastI = currentTrace.length - 1;
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 11px Inter, sans-serif';
+      ctx.fillText('← your last cast', xOf(lastI) + 6, yOf(currentTrace[lastI]));
+    }
+
+    ctx.fillStyle = '#64748b';
+    ctx.font = '11px Inter, sans-serif';
+    ctx.fillText('time (seconds) →', w - pad - 90, h - 12);
+    ctx.save();
+    ctx.translate(14, pad + 50);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('accel. magnitude →', 0, 0);
+    ctx.restore();
+  };
+
+  // ── Lesson 4 (Data Cleaning) crop tool ──
+  // One mini-chart per recorded example, each with a draggable marker AND a
+  // keyboard-accessible <input type="range"> underneath (kept in sync both
+  // ways) showing where its dead-time trim would start. sampleInterval
+  // matches _record_loop's 50ms polling in main.py.
+  const CROP_SAMPLE_INTERVAL = 0.05;
+  const cropState = {}; // example index -> { trace, markerTime, dragging }
+
+  // "Remove this example" button is dynamically injected (rebuilt every
+  // renderCropExamples call), so — same reasoning as the record/cast
+  // buttons — it dispatches a CustomEvent instead of relying on py-click.
+  window.requestCropDelete = function(idx) {
+    document.dispatchEvent(new CustomEvent('crop-delete-example', { detail: { index: idx } }));
+  };
+
+  // ── Lesson 5 export/import (no server — plain file download/upload) ──
+  // jsonText is a pre-serialized JSON string built in Python (json.dumps),
+  // passed through as a plain string rather than a Python dict/list, so
+  // there's no risk of Pyodide's dict-to-Map conversion silently changing
+  // its shape on the way into JS.
+  window.downloadJSON = function(filename, jsonText) {
+    const blob = new Blob([jsonText], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // Reads every selected file as text, then hands each one to Python
+  // individually via a CustomEvent (same dispatch pattern as everywhere
+  // else dynamically-triggered actions cross the JS/Python boundary in
+  // this app) rather than py-click, since this is triggered from a plain
+  // onchange handler, not a static py-click button.
+  window.wandImportMotions = function(fileInputId) {
+    const input = document.getElementById(fileInputId);
+    const files = Array.from((input && input.files) || []);
+    if (files.length === 0) return;
+    Promise.all(files.map(function (f) { return f.text(); })).then(function (contents) {
+      contents.forEach(function (text) {
+        document.dispatchEvent(new CustomEvent('mystery-import-file', { detail: { text: text } }));
+      });
+      input.value = ''; // allow re-selecting the same file(s) again later
+    });
+  };
+
+  window.renderCropExamples = function(containerId, indices, traces, suggestedTimes) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const emptyMsg = document.getElementById(containerId + '-empty');
+
+    if (!indices || indices.length === 0) {
+      container.innerHTML = '';
+      if (emptyMsg) emptyMsg.style.display = '';
+      return;
+    }
+    if (emptyMsg) emptyMsg.style.display = 'none';
+
+    container.innerHTML = indices.map(function (idx, i) {
+      const trace = traces[i];
+      const maxDuration = Math.max((trace.length - 1) * CROP_SAMPLE_INTERVAL, 0.05);
+      return '<div class="crop-example">' +
+        '<div class="crop-example-header">' +
+        '<div class="crop-example-label">Example #' + (idx + 1) + ' — start: ' +
+        '<span id="l4-crop-label-' + idx + '">' + suggestedTimes[i].toFixed(2) + 's</span></div>' +
+        '<button type="button" class="crop-delete-btn" onclick="requestCropDelete(' + idx + ')" ' +
+        'aria-label="Remove example ' + (idx + 1) + ' entirely">&#10005; Remove</button>' +
+        '</div>' +
+        '<canvas class="crop-canvas" id="l4-crop-canvas-' + idx + '" width="600" height="90" ' +
+        'role="img" aria-label="Example ' + (idx + 1) + ' motion trace with a draggable crop-start marker"></canvas>' +
+        '<input type="range" id="l4-crop-value-' + idx + '" min="0" max="' + maxDuration.toFixed(3) +
+        '" step="0.05" value="' + suggestedTimes[i] + '" ' +
+        'aria-label="Crop start time for example ' + (idx + 1) + ', in seconds" ' +
+        'oninput="onCropSliderInput(' + idx + ', this.value)">' +
+        '</div>';
+    }).join('');
+
+    indices.forEach(function (idx, i) {
+      setupCropCanvas(idx, traces[i], suggestedTimes[i]);
+    });
+  };
+
+  window.onCropSliderInput = function(idx, value) {
+    const state = cropState[idx];
+    if (!state) return;
+    state.markerTime = parseFloat(value);
+    const label = document.getElementById('l4-crop-label-' + idx);
+    if (label) label.innerText = state.markerTime.toFixed(2) + 's';
+    drawCropCanvas(idx);
+  };
+
+  function setupCropCanvas(idx, trace, suggestedTime) {
+    const canvas = document.getElementById('l4-crop-canvas-' + idx);
+    if (!canvas) return;
+    cropState[idx] = { trace: trace, markerTime: suggestedTime, dragging: false };
+    drawCropCanvas(idx);
+
+    function timeAtClientX(clientX) {
+      const rect = canvas.getBoundingClientRect();
+      const pad = 8;
+      const maxDuration = Math.max((trace.length - 1) * CROP_SAMPLE_INTERVAL, 0.05);
+      const frac = Math.max(0, Math.min(1, (clientX - rect.left - pad) / (rect.width - 2 * pad)));
+      return frac * maxDuration;
+    }
+    function moveMarkerTo(clientX) {
+      const t = timeAtClientX(clientX);
+      cropState[idx].markerTime = t;
+      const slider = document.getElementById('l4-crop-value-' + idx);
+      if (slider) slider.value = t.toFixed(3);
+      const label = document.getElementById('l4-crop-label-' + idx);
+      if (label) label.innerText = t.toFixed(2) + 's';
+      drawCropCanvas(idx);
+    }
+
+    canvas.onmousedown = function (e) { cropState[idx].dragging = true; moveMarkerTo(e.clientX); };
+    canvas.onmousemove = function (e) { if (cropState[idx].dragging) moveMarkerTo(e.clientX); };
+    canvas.ontouchstart = function (e) { e.preventDefault(); cropState[idx].dragging = true; moveMarkerTo(e.touches[0].clientX); };
+    canvas.ontouchmove = function (e) { e.preventDefault(); if (cropState[idx].dragging) moveMarkerTo(e.touches[0].clientX); };
+    canvas.ontouchend = function () { cropState[idx].dragging = false; };
+    // Mouseup/mousemove are attached to the canvas itself above for the
+    // common case, plus a window-level mouseup so dragging still ends
+    // cleanly if the pointer leaves the canvas before release.
+    window.addEventListener('mouseup', function () {
+      if (cropState[idx]) cropState[idx].dragging = false;
+    });
+  }
+
+  function drawCropCanvas(idx) {
+    const canvas = document.getElementById('l4-crop-canvas-' + idx);
+    const state = cropState[idx];
+    if (!canvas || !state) return;
+    const prepared = prepareCanvas(canvas);
+    const ctx = prepared.ctx, w = prepared.w, h = prepared.h, pad = 8;
+    ctx.clearRect(0, 0, w, h);
+
+    const trace = state.trace;
+    const maxDuration = Math.max((trace.length - 1) * CROP_SAMPLE_INTERVAL, 0.05);
+    const maxV = Math.max.apply(null, trace.concat([1]));
+    const xOf = function (i) { return pad + (i * CROP_SAMPLE_INTERVAL / maxDuration) * (w - 2 * pad); };
+    const yOf = function (v) { return h - pad - (v / maxV) * (h - 2 * pad); };
+    const markerX = pad + (state.markerTime / maxDuration) * (w - 2 * pad);
+
+    // shade the region that would be cropped away
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.12)';
+    ctx.fillRect(pad, pad, Math.max(0, markerX - pad), h - 2 * pad);
+
+    ctx.strokeStyle = '#7c3aed';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    trace.forEach(function (v, i) {
+      const x = xOf(i), y = yOf(v);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 3]);
+    ctx.beginPath();
+    ctx.moveTo(markerX, pad);
+    ctx.lineTo(markerX, h - pad);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // ── Lesson 5 cluster scatter plot ──
+  window.renderClusterScatter = function(canvasId, indices, clusters, bignesses, twistinesses) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    canvas.setAttribute('role', 'img');
+    const numClusters = indices.length ? (Math.max.apply(null, clusters) + 1) : 0;
+    canvas.setAttribute('aria-label', indices.length === 0
+      ? 'Chart is empty — no mystery motions clustered yet.'
+      : 'Scatter plot of ' + indices.length + ' motions grouped into ' + numClusters + ' clusters, plotted by bigness and twistiness.');
+
+    const prepared = prepareCanvas(canvas);
+    const ctx = prepared.ctx, w = prepared.w, h = prepared.h, pad = 34;
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.beginPath();
+    ctx.moveTo(pad, pad); ctx.lineTo(pad, h - pad); ctx.lineTo(w - pad, h - pad);
+    ctx.stroke();
+
+    if (indices.length === 0) return;
+    const xMin = Math.min.apply(null, bignesses), xMax = Math.max.apply(null, bignesses.concat([xMin + 1]));
+    const yMin = Math.min.apply(null, twistinesses), yMax = Math.max.apply(null, twistinesses.concat([yMin + 1]));
+    const colors = ['#7c3aed', '#ef4444', '#10b981', '#f59e0b', '#3b82f6', '#ec4899'];
+    const xOf = function (v) { return pad + ((v - xMin) / ((xMax - xMin) || 1)) * (w - 2 * pad); };
+    const yOf = function (v) { return (h - pad) - ((v - yMin) / ((yMax - yMin) || 1)) * (h - 2 * pad); };
+
+    for (let i = 0; i < indices.length; i++) {
+      const x = xOf(bignesses[i]), y = yOf(twistinesses[i]);
+      ctx.fillStyle = colors[clusters[i] % colors.length];
+      ctx.beginPath();
+      ctx.arc(x, y, 7, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.fillStyle = '#0f172a';
+      ctx.font = '10px monospace';
+      ctx.fillText(String(indices[i]), x + 9, y + 3);
+    }
+
+    ctx.fillStyle = '#64748b';
+    ctx.font = '11px Inter, sans-serif';
+    ctx.fillText('bigness →', w - pad - 55, h - 10);
+    ctx.save();
+    ctx.translate(12, pad + 40);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('twistiness →', 0, 0);
+    ctx.restore();
+  };
+
+  // ── Lesson 6 cluster naming inputs ──
+  window.renderClusterNaming = function(containerId, clusterIds, counts) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const letters = 'ABCDEFGH';
+    let html = '';
+    for (let i = 0; i < clusterIds.length; i++) {
+      const cid = clusterIds[i];
+      const letter = letters[i] || String(i + 1);
+      html += '<div class="slider-group">' +
+        '<label for="l6-name-' + cid + '">Group ' + (i + 1) + ' (' + counts[i] + ' motions):</label>' +
+        '<input type="text" id="l6-name-' + cid + '" value="Spell ' + letter + '">' +
+        '</div>';
+    }
+    container.innerHTML = html;
+  };
+
+  // ── Before/after bars, shared by Lesson 3 (Data Bias) and Lesson 4
+  // (Data Cleaning) — each has its own set of #{prefix}-before-bar etc. ──
+  window.updateBeforeAfter = function(prefix, beforePct, afterPct) {
+    const beforeBar = document.getElementById(prefix + '-before-bar');
+    const afterBar = document.getElementById(prefix + '-after-bar');
+    const beforeLabel = document.getElementById(prefix + '-before-label');
+    const afterLabel = document.getElementById(prefix + '-after-label');
+    if (beforeBar && beforeLabel) {
+      if (beforePct === null || beforePct === undefined) {
+        beforeBar.style.width = '0%'; beforeLabel.innerText = 'Before: --';
+      } else {
+        beforeBar.style.width = beforePct + '%'; beforeLabel.innerText = 'Before: ' + beforePct.toFixed(0) + '%';
+      }
+    }
+    if (afterBar && afterLabel) {
+      if (afterPct === null || afterPct === undefined) {
+        afterBar.style.width = '0%'; afterLabel.innerText = 'After: --';
+      } else {
+        afterBar.style.width = afterPct + '%'; afterLabel.innerText = 'After: ' + afterPct.toFixed(0) + '%';
+      }
+    }
+  };
+</script>
+
+<script type="py" src="./main.py" config="./pyscript.toml"></script>
+</body>
+</html>

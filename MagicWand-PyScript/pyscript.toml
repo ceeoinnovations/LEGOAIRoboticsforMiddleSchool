@@ -1,0 +1,8 @@
+name = "Magic-Wand"
+packages = [ "legoeducation", "numpy",]
+
+[files]
+"./wand_ml.py" = ""
+
+[js_modules.main]
+"./ble.js" = "ble"
