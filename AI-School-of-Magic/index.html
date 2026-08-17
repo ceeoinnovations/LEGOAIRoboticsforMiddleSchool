@@ -218,24 +218,27 @@
     background: #fff;
   }
 
-  /* Tips & Tricks: native <details> gives keyboard toggling (Enter/Space on
-     the focused <summary>) and correct expanded/collapsed semantics for
+  /* Collapsible box: native <details> gives keyboard toggling (Enter/Space
+     on the focused <summary>) and correct expanded/collapsed semantics for
      screen readers for free, so it's used as-is rather than a custom
-     JS/ARIA widget. */
-  .tips-tricks {
+     JS/ARIA widget. Shared by Tips & Tricks (static text) and any
+     collapsed-by-default optional tool section (e.g. Class 2 Lesson 1's
+     mystery-motion crop tool), which also carries the .tips-tricks class
+     below only when it actually contains a tips <ul>. */
+  .collapsible-box {
     margin-top: 20px;
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 12px 16px;
     background: #f8fafc;
   }
-  .tips-tricks summary {
+  .collapsible-box summary {
     cursor: pointer;
     font-weight: 700;
     color: var(--text-secondary);
   }
-  .tips-tricks summary:hover { color: var(--text-primary); }
-  .tips-tricks[open] summary { margin-bottom: 10px; }
+  .collapsible-box summary:hover { color: var(--text-primary); }
+  .collapsible-box[open] summary { margin-bottom: 10px; }
   .tips-tricks ul {
     margin: 0;
     padding-left: 20px;
@@ -334,7 +337,8 @@
     display: block;
   }
 
-  /* Lesson 4 (Data Cleaning) crop tool: one card per recorded example */
+  /* Crop tool (Lesson 5's Data Cleaning, and Class 2 Lesson 1's optional
+     mystery-motion cleanup): one card per recorded example */
   .crop-example {
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -532,7 +536,7 @@
         </ul>
       </div>
 
-      <details class="tips-tricks">
+      <details class="collapsible-box tips-tricks">
         <summary>Tips &amp; Tricks</summary>
         <ul>
           <li>If the Bluetooth connection keeps failing, try moving the Double Motor closer to your computer,
@@ -620,7 +624,7 @@
         <canvas class="overlay-canvas" id="l1-overlay-canvas" width="900" height="260" style="display: none;"></canvas>
       </div>
 
-      <details class="tips-tricks">
+      <details class="collapsible-box tips-tricks">
         <summary>Tips &amp; Tricks</summary>
         <ul>
           <li>If your cast never gets recognized, try lowering the Recognition threshold slider a little before
@@ -693,7 +697,7 @@
         </div>
       </div>
 
-      <details class="tips-tricks">
+      <details class="collapsible-box tips-tricks">
         <summary>Tips &amp; Tricks</summary>
         <ul>
           <li>It's normal for a friend's spell to fail here — that's the whole point of this step, not a bug.</li>
@@ -772,7 +776,7 @@
         </div>
       </div>
 
-      <details class="tips-tricks">
+      <details class="collapsible-box tips-tricks">
         <summary>Tips &amp; Tricks</summary>
         <ul>
           <li>Compare the Before/After bars carefully — if After isn't much higher, adding more of your friend's
@@ -848,7 +852,7 @@
         </div>
       </div>
 
-      <details class="tips-tricks">
+      <details class="collapsible-box tips-tricks">
         <summary>Tips &amp; Tricks</summary>
         <ul>
           <li>If training says you need more casts, that's the point — go back to Lesson 2 and record a
@@ -942,7 +946,7 @@
         </div>
       </div>
 
-      <details class="tips-tricks">
+      <details class="collapsible-box tips-tricks">
         <summary>Tips &amp; Tricks</summary>
         <ul>
           <li>The suggested crop point is a guess, not a rule — trust what you see in the chart over the
@@ -1013,6 +1017,21 @@
         </div>
       </div>
 
+      <details class="collapsible-box">
+        <summary>Optional: Clean Up Your Mystery Motions</summary>
+        <p class="lesson-intro">Same idea as Lesson 5's data cleaning: if you held the button for a moment
+          before actually moving, that dead time is part of every mystery motion's recorded shape too — and
+          k-means compares shapes, so it can throw off which group a motion lands in. This step is optional
+          because k-means is often fine without it; try "Find Patterns" first; only bother with this if the
+          groups look messier than you'd expect.</p>
+        <button id="btn-l5-load-mystery-crops" py-click="l5_load_mystery_examples" style="margin-top: 10px;">Load My Mystery Motions</button>
+        <p class="lesson-intro" id="l5-mystery-crop-container-empty" style="margin-top: 8px;">Click "Load My Mystery Motions" to see each recorded motion with a suggested crop point.</p>
+        <div id="l5-mystery-crop-container"></div>
+        <div class="actions-row" style="margin-top: 10px;">
+          <button id="btn-l5-apply-mystery-crops" py-click="l5_apply_mystery_crops" disabled>Apply Crops</button>
+        </div>
+      </details>
+
       <div class="subsection">
         <h3>Step 3: Find the patterns</h3>
         <div class="slider-group">
@@ -1033,7 +1052,7 @@
         <div class="results-summary" id="l5-summary">No patterns found yet.</div>
       </div>
 
-      <details class="tips-tricks">
+      <details class="collapsible-box tips-tricks">
         <summary>Tips &amp; Tricks</summary>
         <ul>
           <li>Try to make each mystery motion clearly different from your others — very similar motions are
@@ -1093,7 +1112,7 @@
         <div class="badge badge-neutral" id="l6-cast-result">Name and save your spells to try casting.</div>
       </div>
 
-      <details class="tips-tricks">
+      <details class="collapsible-box tips-tricks">
         <summary>Tips &amp; Tricks</summary>
         <ul>
           <li>Give each spell a name before saving — you can always rename and re-save later if you change your
@@ -1374,22 +1393,25 @@
     ctx.restore();
   };
 
-  // ── Lesson 4 (Data Cleaning) crop tool ──
+  // ── Crop tool (Lesson 5 Data Cleaning, and Class 2 Lesson 1's optional mystery-motion cleanup) ──
   // One mini-chart per recorded example, each with a draggable marker AND a
   // keyboard-accessible <input type="range"> underneath (kept in sync both
   // ways) showing where its dead-time trim would start. sampleInterval
   // matches _record_loop's 50ms polling in main.py.
   const CROP_SAMPLE_INTERVAL = 0.05;
-  const cropState = {}; // example index -> { trace, markerTime, dragging }
+  const cropState = {}; // "prefix:index" -> { trace, markerTime, dragging }
 
   // "Remove this example" button is dynamically injected (rebuilt every
   // renderCropExamples call), so — same reasoning as the record/cast
   // buttons — it dispatches a CustomEvent instead of relying on py-click.
-  window.requestCropDelete = function(idx) {
-    document.dispatchEvent(new CustomEvent('crop-delete-example', { detail: { index: idx } }));
+  // datasetKind tells Python which crop tool this came from (Lesson 5's
+  // Fireball crops vs. Class 2 Lesson 1's optional mystery-motion crops)
+  // since both can be loaded into the page (just one hidden) at once.
+  window.requestCropDelete = function(idx, datasetKind) {
+    document.dispatchEvent(new CustomEvent('crop-delete-example', { detail: { index: idx, dataset: datasetKind || 'fireball' } }));
   };
 
-  // ── Lesson 5 export/import (no server — plain file download/upload) ──
+  // ── Class 2, Lesson 1 export/import (no server — plain file download/upload) ──
   // jsonText is a pre-serialized JSON string built in Python (json.dumps),
   // passed through as a plain string rather than a Python dict/list, so
   // there's no risk of Pyodide's dict-to-Map conversion silently changing
@@ -1423,10 +1445,19 @@
     });
   };
 
-  window.renderCropExamples = function(containerId, indices, traces, suggestedTimes) {
+  // containerId's own id becomes every inner element's id prefix (e.g.
+  // "l4-crop-container" -> "l4-crop-canvas-0", "l4-crop-label-0", ...),
+  // and cropState is keyed by "prefix:idx" — so this same renderer can back
+  // two independent crop tools on the page at once (Lesson 5's Fireball
+  // crops and Class 2 Lesson 1's optional mystery-motion crops) without
+  // their DOM ids or drag state colliding, even though the other one stays
+  // mounted (just hidden) while you're on this tab.
+  window.renderCropExamples = function(containerId, indices, traces, suggestedTimes, datasetKind) {
     const container = document.getElementById(containerId);
     if (!container) return;
     const emptyMsg = document.getElementById(containerId + '-empty');
+    const prefix = containerId.replace(/-container$/, '');
+    const kind = datasetKind || 'fireball';
 
     if (!indices || indices.length === 0) {
       container.innerHTML = '';
@@ -1441,38 +1472,39 @@
       return '<div class="crop-example">' +
         '<div class="crop-example-header">' +
         '<div class="crop-example-label">Example #' + (idx + 1) + ' — start: ' +
-        '<span id="l4-crop-label-' + idx + '">' + suggestedTimes[i].toFixed(2) + 's</span></div>' +
-        '<button type="button" class="crop-delete-btn" onclick="requestCropDelete(' + idx + ')" ' +
+        '<span id="' + prefix + '-label-' + idx + '">' + suggestedTimes[i].toFixed(2) + 's</span></div>' +
+        '<button type="button" class="crop-delete-btn" onclick="requestCropDelete(' + idx + ', \'' + kind + '\')" ' +
         'aria-label="Remove example ' + (idx + 1) + ' entirely">&#10005; Remove</button>' +
         '</div>' +
-        '<canvas class="crop-canvas" id="l4-crop-canvas-' + idx + '" width="600" height="90" ' +
+        '<canvas class="crop-canvas" id="' + prefix + '-canvas-' + idx + '" width="600" height="90" ' +
         'role="img" aria-label="Example ' + (idx + 1) + ' motion trace with a draggable crop-start marker"></canvas>' +
-        '<input type="range" id="l4-crop-value-' + idx + '" min="0" max="' + maxDuration.toFixed(3) +
+        '<input type="range" id="' + prefix + '-value-' + idx + '" min="0" max="' + maxDuration.toFixed(3) +
         '" step="0.05" value="' + suggestedTimes[i] + '" ' +
         'aria-label="Crop start time for example ' + (idx + 1) + ', in seconds" ' +
-        'oninput="onCropSliderInput(' + idx + ', this.value)">' +
+        'oninput="onCropSliderInput(\'' + prefix + '\', ' + idx + ', this.value)">' +
         '</div>';
     }).join('');
 
     indices.forEach(function (idx, i) {
-      setupCropCanvas(idx, traces[i], suggestedTimes[i]);
+      setupCropCanvas(prefix, idx, traces[i], suggestedTimes[i]);
     });
   };
 
-  window.onCropSliderInput = function(idx, value) {
-    const state = cropState[idx];
+  window.onCropSliderInput = function(prefix, idx, value) {
+    const state = cropState[prefix + ':' + idx];
     if (!state) return;
     state.markerTime = parseFloat(value);
-    const label = document.getElementById('l4-crop-label-' + idx);
+    const label = document.getElementById(prefix + '-label-' + idx);
     if (label) label.innerText = state.markerTime.toFixed(2) + 's';
-    drawCropCanvas(idx);
+    drawCropCanvas(prefix, idx);
   };
 
-  function setupCropCanvas(idx, trace, suggestedTime) {
-    const canvas = document.getElementById('l4-crop-canvas-' + idx);
+  function setupCropCanvas(prefix, idx, trace, suggestedTime) {
+    const canvas = document.getElementById(prefix + '-canvas-' + idx);
     if (!canvas) return;
-    cropState[idx] = { trace: trace, markerTime: suggestedTime, dragging: false };
-    drawCropCanvas(idx);
+    const key = prefix + ':' + idx;
+    cropState[key] = { trace: trace, markerTime: suggestedTime, dragging: false };
+    drawCropCanvas(prefix, idx);
 
     function timeAtClientX(clientX) {
       const rect = canvas.getBoundingClientRect();
@@ -1483,30 +1515,30 @@
     }
     function moveMarkerTo(clientX) {
       const t = timeAtClientX(clientX);
-      cropState[idx].markerTime = t;
-      const slider = document.getElementById('l4-crop-value-' + idx);
+      cropState[key].markerTime = t;
+      const slider = document.getElementById(prefix + '-value-' + idx);
       if (slider) slider.value = t.toFixed(3);
-      const label = document.getElementById('l4-crop-label-' + idx);
+      const label = document.getElementById(prefix + '-label-' + idx);
       if (label) label.innerText = t.toFixed(2) + 's';
-      drawCropCanvas(idx);
+      drawCropCanvas(prefix, idx);
     }
 
-    canvas.onmousedown = function (e) { cropState[idx].dragging = true; moveMarkerTo(e.clientX); };
-    canvas.onmousemove = function (e) { if (cropState[idx].dragging) moveMarkerTo(e.clientX); };
-    canvas.ontouchstart = function (e) { e.preventDefault(); cropState[idx].dragging = true; moveMarkerTo(e.touches[0].clientX); };
-    canvas.ontouchmove = function (e) { e.preventDefault(); if (cropState[idx].dragging) moveMarkerTo(e.touches[0].clientX); };
-    canvas.ontouchend = function () { cropState[idx].dragging = false; };
+    canvas.onmousedown = function (e) { cropState[key].dragging = true; moveMarkerTo(e.clientX); };
+    canvas.onmousemove = function (e) { if (cropState[key].dragging) moveMarkerTo(e.clientX); };
+    canvas.ontouchstart = function (e) { e.preventDefault(); cropState[key].dragging = true; moveMarkerTo(e.touches[0].clientX); };
+    canvas.ontouchmove = function (e) { e.preventDefault(); if (cropState[key].dragging) moveMarkerTo(e.touches[0].clientX); };
+    canvas.ontouchend = function () { cropState[key].dragging = false; };
     // Mouseup/mousemove are attached to the canvas itself above for the
     // common case, plus a window-level mouseup so dragging still ends
     // cleanly if the pointer leaves the canvas before release.
     window.addEventListener('mouseup', function () {
-      if (cropState[idx]) cropState[idx].dragging = false;
+      if (cropState[key]) cropState[key].dragging = false;
     });
   }
 
-  function drawCropCanvas(idx) {
-    const canvas = document.getElementById('l4-crop-canvas-' + idx);
-    const state = cropState[idx];
+  function drawCropCanvas(prefix, idx) {
+    const canvas = document.getElementById(prefix + '-canvas-' + idx);
+    const state = cropState[prefix + ':' + idx];
     if (!canvas || !state) return;
     const prepared = prepareCanvas(canvas);
     const ctx = prepared.ctx, w = prepared.w, h = prepared.h, pad = 8;
@@ -1542,7 +1574,7 @@
     ctx.setLineDash([]);
   }
 
-  // ── Lesson 5 cluster scatter plot ──
+  // ── Class 2, Lesson 1 cluster scatter plot ──
   window.renderClusterScatter = function(canvasId, indices, clusters, bignesses, twistinesses) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;

@@ -558,7 +558,7 @@ def l4_load_examples(e=None):
     examples = _datasets['fireball']
     if not examples:
         _crop_originals = {}
-        window.renderCropExamples('l4-crop-container', [], [], [])
+        window.renderCropExamples('l4-crop-container', [], [], [], 'fireball')
         document.getElementById('btn-l4-apply-crops').disabled = True
         log("No Fireball examples yet — record some in Lesson 1 first.")
         return
@@ -570,7 +570,7 @@ def l4_load_examples(e=None):
         indices.append(i)
         traces.append(accel_magnitude(ex['trace']))
         suggested.append(round(start_idx * 0.05, 3))
-    window.renderCropExamples('l4-crop-container', indices, traces, suggested)
+    window.renderCropExamples('l4-crop-container', indices, traces, suggested, 'fireball')
     document.getElementById('btn-l4-apply-crops').disabled = False
     log(f"Loaded {len(examples)} example(s) with a suggested crop point each. Drag any marker to adjust, then Apply Crops.")
 
@@ -802,6 +802,74 @@ def l5_clear(e=None):
     log("Cleared mystery motions.")
 
 
+# Optional mystery-motion crop tool — same dead-time trimming as Lesson 5's
+# Fireball crop tool, reusing the same JS renderer (see renderCropExamples
+# in index.html) with 'l5-mystery-crop-container'/'mystery' instead of
+# 'l4-crop-container'/'fireball' so the two stay independent. Optional
+# because, unlike Lessons 1-4's labeled recognition, k-means just compares
+# shapes — dead time is less likely to break it outright, so this is framed
+# as a "try this if patterns look messy" extra rather than a required step.
+_crop_originals_mystery = {}   # example index (into _datasets['mystery']) -> its
+                                # original, uncropped trace, captured at Load time.
+
+def l5_load_mystery_examples(e=None):
+    global _crop_originals_mystery
+    examples = _datasets['mystery']
+    if not examples:
+        _crop_originals_mystery = {}
+        window.renderCropExamples('l5-mystery-crop-container', [], [], [], 'mystery')
+        document.getElementById('btn-l5-apply-mystery-crops').disabled = True
+        log("No mystery motions yet — record some above first.")
+        return
+    _crop_originals_mystery = {i: ex['trace'] for i, ex in enumerate(examples)}
+
+    indices, traces, suggested = [], [], []
+    for i, ex in enumerate(examples):
+        start_idx = detect_motion_start(ex['trace'])
+        indices.append(i)
+        traces.append(accel_magnitude(ex['trace']))
+        suggested.append(round(start_idx * 0.05, 3))
+    window.renderCropExamples('l5-mystery-crop-container', indices, traces, suggested, 'mystery')
+    document.getElementById('btn-l5-apply-mystery-crops').disabled = False
+    log(f"Loaded {len(examples)} mystery motion(s) with a suggested crop point each. Drag any marker to adjust, then Apply Crops.")
+
+def l5_delete_mystery_example(idx):
+    """Removes one mystery motion outright — same reasoning as Lesson 5's
+    Fireball crop tool's delete button. Reloads the crop UI afterward so
+    remaining examples get fresh, correctly-shifted indices."""
+    examples = _datasets['mystery']
+    if not (0 <= idx < len(examples)):
+        log("Could not remove that mystery motion (already removed?).")
+        return
+    examples.pop(idx)
+    _refresh_counts()
+    log(f"Removed mystery motion #{idx + 1}.")
+    l5_load_mystery_examples()
+
+def l5_apply_mystery_crops(e=None):
+    if not _crop_originals_mystery:
+        log("Load your mystery motions first.")
+        return
+    examples = _datasets['mystery']
+    changed = 0
+    for i, original_trace in _crop_originals_mystery.items():
+        if i >= len(examples):
+            continue
+        el = document.getElementById(f'l5-mystery-crop-value-{i}')
+        if el is None:
+            continue
+        try:
+            crop_seconds = float(el.value)
+        except Exception:
+            crop_seconds = 0.0
+        start_idx = max(0, min(len(original_trace) - 4, round(crop_seconds / 0.05)))
+        examples[i]['trace'] = original_trace[start_idx:]
+        if start_idx > 0:
+            changed += 1
+    log(f"Applied crops: trimmed dead time from {changed} of {len(_crop_originals_mystery)} mystery motion(s). "
+        "Click Find Patterns again to see the effect.")
+
+
 # ══════════════════════════════════════════════════════════════
 # CLASS 2, LESSON 2 — Make New Spells (name the discovered clusters, recognize them)
 # ══════════════════════════════════════════════════════════════
@@ -914,15 +982,25 @@ _record_stop_proxy = create_proxy(_on_record_stop_event)
 document.addEventListener('wand-record-start', _record_start_proxy)
 document.addEventListener('wand-record-stop', _record_stop_proxy)
 
-# Delete button on each Lesson 4 crop card is dynamically injected by
+# Delete button on each crop card (Lesson 5's Fireball crops, or Class 2
+# Lesson 1's optional mystery-motion crops) is dynamically injected by
 # renderCropExamples(), so — same reasoning as the record/cast buttons —
-# it dispatches a CustomEvent rather than relying on py-click.
+# it dispatches a CustomEvent rather than relying on py-click. event.detail
+# .dataset says which crop tool it came from, since both can be loaded at
+# once (just one hidden).
 def _on_crop_delete_event(event):
     try:
         idx = int(event.detail.index)
     except Exception:
         return
-    l4_delete_example(idx)
+    try:
+        kind = str(event.detail.dataset)
+    except Exception:
+        kind = 'fireball'
+    if kind == 'mystery':
+        l5_delete_mystery_example(idx)
+    else:
+        l4_delete_example(idx)
 
 _crop_delete_proxy = create_proxy(_on_crop_delete_event)
 document.addEventListener('crop-delete-example', _crop_delete_proxy)
