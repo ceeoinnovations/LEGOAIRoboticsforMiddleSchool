@@ -139,24 +139,36 @@
   <div class="overview">
     <h2>Overview</h2>
     <p><b>Browser:</b> Chrome or Edge only, on a computer or Android phone — not Safari, iPhone/iPad, or Firefox.
-      The app needs Web Bluetooth to talk to the Double Motor; worth confirming your classroom's devices support it
-      before the period starts.</p>
-    <p><b>Nothing is saved:</b> there's no server and no accounts — every recorded motion and trained model lives
-      only in the browser tab's memory. A reload clears everything. Plan around that: either keep the tab open
-      across a multi-day unit, or expect students to re-record when picking a lesson back up.</p>
-    <p><b>Two knobs worth knowing before you're in front of a class:</b> the Recognition threshold slider
-      (Lesson 1, default 50%) controls how close a cast needs to be to count as recognized, and the Number of
-      groups slider (Class 2 Lesson 1, default 3) tells k-means how many clusters to look for. Both are meant to
-      be tuned per class, not left on defaults.</p>
-    <p><b>How the AI actually works, in one paragraph:</b> every Class 1 lesson (0-5) runs on one algorithm,
-      K-Nearest Neighbors. &ldquo;Training&rdquo; just means saving example recordings; recognizing a new cast
-      means measuring how close it is to those saved examples and picking the closest match. Nothing is hidden —
-      any lesson's result traces back to &ldquo;which saved examples ended up closest, and was that close enough
-      (the threshold)?&rdquo; Class 2 Lesson 1 uses a different algorithm, k-means clustering, which groups
-      unlabeled recordings by mutual closeness without ever being told what the groups are. Class 2 Lesson 2 then
-      reuses the same KNN machinery from Class 1, just with the k-means groups as its labels instead of
-      human-given ones. Both are implemented from scratch in <code>wand_ml.py</code> — no scikit-learn, no cloud
-      API — specifically so nothing here is a black box.</p>
+      The app needs Web Bluetooth to talk to the Double Motors which (as of right now) those don't support.</p>
+    <p><b>Nothing is saved automatically:</b> there's no server and no accounts — every recorded motion and trained
+      model lives only in the browser tab's memory, and a reload clears everything. Both classes now have a manual
+      save: Class 1 has "Save My Data"/"Load Saved Data" in the sidebar (raw recordings only — students click
+      Train/Retrain again after loading), and Class 2 has "Export"/"Import" for pooling mystery motions across the
+      class. Neither happens automatically, so still plan around it: either keep the tab open across a multi-day
+      unit, or have students save before closing the tab.</p>
+    <p><b>Two knobs worth knowing before you're in front of a
+      class:</b> the Recognition threshold slider (Lesson 1, default
+      50%) controls how similar to the examples a cast needs to be to
+      be recognized, and the Number of groups slider (Class 2 Lesson
+      1, default 3) tells k-means how many clusters to look for.
+      Both are meant to be tuned by the class, not left on
+      defaults.</p>
+    <p><b>How the AI actually works, in one paragraph:</b> every Class
+      1 lesson (0-5) runs on one algorithm, K-Nearest
+      Neighbors. &ldquo;Training&rdquo; just means saving example
+      recordings; recognizing a new cast means measuring how close it
+      is to those saved examples and picking the closest
+      match. Nothing is hidden — any lesson's result traces back to
+      &ldquo;which saved examples ended up closest, and was that close
+      enough (the threshold)?&rdquo; Class 2 Lesson 1 uses a different
+      algorithm, k-means clustering, which groups unlabeled recordings
+      by mutual closeness without ever being told what the groups
+      are. Class 2 Lesson 2 then reuses the same KNN machinery from
+      Class 1, just with the k-means groups as its labels instead of
+      human-given ones. Both are implemented from scratch
+      in <code>wand_ml.py</code> — no scikit-learn, no cloud API, no
+      pre-trained models — specifically so nothing here is a black
+      box.</p>
   </div>
 
   <nav class="toc" aria-label="Jump to a lesson">
@@ -182,21 +194,44 @@
       <span class="lesson-card-class">Class 1</span>
       <h2>Lesson 0: Build Your Wand</h2>
     </div>
-    <p class="student-challenge">Student challenge: &ldquo;Build a magic wand and create different types of spells!&rdquo;</p>
+    <p class="student-challenge">Student challenge: &ldquo;Build a
+    magic wand and create different types of spells!&rdquo;</p>
     <h3>What's actually happening</h3>
-    <p>No AI yet — this lesson is entirely about the hardware. The Double Motor's built-in IMU (accelerometer +
-      gyroscope) streams six numbers continuously (<code>[ax, ay, az, gx, gy, gz]</code>) once connected; every
-      later lesson's &ldquo;recording&rdquo; is just buffering that stream while a button is held.</p>
+    <p>No AI yet — this lesson is entirely about the hardware. The
+      Double Motor's built-in IMU (accelerometer + gyroscope) streams
+      six numbers continuously (<code>[ax, ay, az, gx, gy, gz]</code>)
+      once connected; every later lesson's &ldquo;recording&rdquo; is
+      just buffering that stream while a button is held.</p>
     <h3>What &ldquo;working&rdquo; looks like</h3>
-    <p>The light blinks <em>and</em> beeps (not just glows) before it shows up in the browser's device picker, the
-      wand is built securely enough that the sensor doesn't shift mid-cast, and each student has picked one
-      consistent grip/orientation they'll reuse for the rest of the unit.</p>
+    <p>The light blinks <em>and</em> beeps (not just glows) before it
+      shows up in the browser's device picker, the wand is built
+      securely enough that the sensor doesn't shift mid-cast, and each
+      student has picked one consistent grip/orientation they'll reuse
+      for the rest of the unit.</p>
     <h3>Common snags &amp; fixes</h3>
     <ul>
-      <li>Web Bluetooth only works in Chrome or Edge, on a computer or Android phone — confirm your classroom's
-        devices support it before the period starts, not during.</li>
-      <li>Pairing needs two presses of the Double Motor's button: one sets the color, the second arms it
-        (blink + beep) so it appears in the picker. A wand that's only glowing solid needs a second press.</li>
+      <li>Web Bluetooth only works in Chrome or Edge, on a computer or
+        Android phone — confirm your classroom's devices support it
+        before the period starts, not during.</li>
+      <li>Pairing can be done with or without the color cards.</li>
+      <li>Without a color card, press the double motor's light/button
+	once. It should start blinking white.  Press the "Connect"
+	button on the website and a popup should appear offering to
+	connect to something over bluetooth - pick the Double
+	Motor. </li>
+	<li>With a color card, press the button once and it will blink
+      and beep white. Tap the color card and now the light/button will
+      be lit solidly with that color. Then press a second time, and it
+      will beep again and blink in color. Now if you open the connect
+      dialog box, it will list the color of the device---useful if you
+      have a classroom full of beeping double motors so that everyone
+	  connects to their own motor and not someone else's </li>
+	<li> NOTHING prevents the students from connecting to someone
+	else's double motor either accidentally or intentionally by
+	keeping the Bluetooth window open and pairing faster than
+	their classmate can navigate the interface.  If something is
+	weird, check if the students are actually connected to the
+	motor they are holding.</li>
       <li>Flaky pairing usually means Bluetooth interference — move the wand closer to the laptop and away from
         other Bluetooth devices in the room.</li>
       <li>A loose or inconsistent grip is the single biggest cause of &ldquo;spell not recognized&rdquo; two
@@ -217,17 +252,21 @@
     <h3>What's actually happening</h3>
     <p>This is K-Nearest Neighbors (KNN) in its simplest form. Each held-button recording becomes one saved data
       point — a 6-axis motion trace, resampled to a fixed length (<code>resample_trace</code> in
-      <code>wand_ml.py</code>) so a fast cast and a slow cast can still be compared fairly. &ldquo;Training&rdquo;
-      doesn't compute anything clever; it just stores the examples. Recognizing a test cast means measuring its
-      distance to those saved examples and converting that into a confidence score — the Recognition threshold
-      slider is simply &ldquo;how close counts as a match.&rdquo;</p>
+      <code>wand_ml.py</code>) so a fast cast and a slow cast can
+      still be compared fairly. &ldquo;Training&rdquo; doesn't compute
+      anything clever; it just stores the examples. Recognizing a test
+      cast means measuring its distance to those saved examples and
+      converting that into a confidence score — the Recognition
+      threshold slider is simply &ldquo;how close counts as a
+      match.&rdquo;</p>
     <h3>What &ldquo;working&rdquo; looks like</h3>
     <p>6-8 examples that overlap closely on the &ldquo;Compare your examples&rdquo; chart, and a test cast
       recognized comfortably above the threshold (default 50%).</p>
     <h3>Common snags &amp; fixes</h3>
     <ul>
-      <li>If a cast isn't recognized, lower the threshold slider before assuming the training data itself is bad —
-        it's often just a strictness setting.</li>
+      <li>If a cast isn't recognized, lower the threshold slider
+        before assuming the training data itself is bad — it's often
+        just a strictness setting.</li>
       <li>The overlay chart is the fastest diagnostic in the whole app: if the lines don't sit on top of each
         other, that's almost always why recognition is failing.</li>
       <li>Flat time at the start of a line (before the spike) means the button was held before the motion started
