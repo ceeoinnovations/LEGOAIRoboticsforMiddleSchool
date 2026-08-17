@@ -60,10 +60,26 @@
   .header h1 { margin: 0; font-size: 2.4rem; color: var(--text-primary); font-family: 'Varela Round', 'Droid Sans', sans-serif; }
   .header p { margin: 8px 0 0; color: var(--text-secondary); }
   .header-logo-aisom { height: 80px; width: auto; justify-self: start; }
-  .header-logo-ewb { width: 140px; height: auto; justify-self: end; }
+  .header-logo-ewb-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; justify-self: end; }
+  .header-logo-ewb { width: 140px; height: auto; }
+  .teacher-guide-btn {
+    display: inline-block;
+    background: var(--card-bg);
+    color: var(--think-color);
+    border: 2px solid var(--think-color);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    font-family: 'Droid Sans', system-ui, sans-serif;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .teacher-guide-btn:hover { background: var(--think-color); color: #fff; }
   @media (max-width: 700px) {
     .header { grid-template-columns: 1fr; justify-items: center; }
-    .header-logo-aisom, .header-logo-ewb { justify-self: center; }
+    .header-logo-aisom, .header-logo-ewb-wrap { justify-self: center; }
+    .header-logo-ewb-wrap { align-items: center; }
   }
 
   .container { display: flex; gap: 20px; width: 100%; max-width: 1200px; }
@@ -431,7 +447,10 @@
     <h1>&#10024; Magic Wand</h1>
     <p>Teach your LEGO&reg; wand to recognize spells using its built-in motion sensor.</p>
   </div>
-  <img class="header-logo-ewb" src="images/EngineeringWithBricks.png" alt="Engineering with Bricks logo">
+  <div class="header-logo-ewb-wrap">
+    <img class="header-logo-ewb" src="images/EngineeringWithBricks.png" alt="Engineering with Bricks logo">
+    <a class="teacher-guide-btn" href="teacher-guide.html">&#128214; Teacher Guide</a>
+  </div>
 </div>
 
 <div class="class-bar">
@@ -474,6 +493,21 @@
       <div class="row"><span>Mystery motions</span><b id="count-mystery">0</b></div>
     </div>
  <button id="btn-l1-clear" class="danger" py-click="l1_clear">Clear Training Data</button>
+
+    <h3 style="margin-bottom: 0;">Save/Load Class 1 Data</h3>
+    <p class="lesson-intro" style="margin: 0;">Saves Lessons 1-5's raw recordings (Fireball examples + friend test
+      casts) to a file so you can pick up next class. Trained models and result tables aren't saved — click
+      Train/Retrain again after loading.</p>
+    <div class="slider-group">
+      <label for="l1-student-name">Your name (used in the saved file):</label>
+      <input type="text" id="l1-student-name" placeholder="e.g. Alex">
+    </div>
+    <div class="actions-row">
+      <button id="btn-l1-export" py-click="l1_export_session">Save My Data</button>
+      <button id="btn-l1-import" onclick="document.getElementById('l1-import-input').click()">Load Saved Data</button>
+      <input type="file" id="l1-import-input" accept="application/json,.json" multiple
+             style="display:none" onchange="wandImportClass1Session('l1-import-input')">
+    </div>
 
     <h3 style="margin-bottom: 0;">Logs</h3>
     <div class="terminal" id="terminal"></div>
@@ -1442,6 +1476,20 @@
         document.dispatchEvent(new CustomEvent('mystery-import-file', { detail: { text: text } }));
       });
       input.value = ''; // allow re-selecting the same file(s) again later
+    });
+  };
+
+  // ── Class 1 save/load (same pattern as the Class 2 import above, just a
+  //    different event name so Python can tell the two file kinds apart) ──
+  window.wandImportClass1Session = function(fileInputId) {
+    const input = document.getElementById(fileInputId);
+    const files = Array.from((input && input.files) || []);
+    if (files.length === 0) return;
+    Promise.all(files.map(function (f) { return f.text(); })).then(function (contents) {
+      contents.forEach(function (text) {
+        document.dispatchEvent(new CustomEvent('class1-import-file', { detail: { text: text } }));
+      });
+      input.value = '';
     });
   };
 
