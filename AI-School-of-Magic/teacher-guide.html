@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teacher Guide — AI School of Magic</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%AA%84%3C/text%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Droid+Sans:wght@400;700&family=Varela+Round&family=Inconsolata:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  /* SCAFFOLD — colors/fonts borrowed from index.html so this reads as the
+     same site; content below is placeholder structure, not final copy. */
+  :root {
+    --bg-color: #f8fafc;
+    --card-bg: #ffffff;
+    --text-primary: #333129;
+    --text-secondary: #6b6552;
+    --accent: #fcd700;
+    --border: #e2e8f0;
+    --radius: 16px;
+    --challenge-color: #c3157e;
+    --think-color: #0a6e78;
+  }
+  body {
+    font-family: 'Droid Sans', system-ui, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+  }
+  .header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    max-width: 1200px;
+    margin-bottom: 20px;
+  }
+  .header-text { text-align: center; }
+  .header h1 { margin: 0; font-size: 2.2rem; color: var(--text-primary); font-family: 'Varela Round', 'Droid Sans', sans-serif; }
+  .header p { margin: 8px 0 0; color: var(--text-secondary); }
+  .header-logo-aisom { height: 80px; width: auto; justify-self: start; }
+  .back-btn {
+    display: inline-block;
+    justify-self: end;
+    background: var(--card-bg);
+    color: var(--text-secondary);
+    border: 2px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .back-btn:hover { border-color: var(--think-color); color: var(--think-color); }
+  @media (max-width: 700px) {
+    .header { grid-template-columns: 1fr; justify-items: center; }
+    .header-logo-aisom, .back-btn { justify-self: center; }
+  }
+
+  main { width: 100%; max-width: 1200px; }
+
+  /* TOC nav — mirrors index.html's class-bar/tab-bar pill styling */
+  .toc {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+  }
+  .toc h2 { margin: 0 0 4px; font-size: 1rem; color: var(--text-secondary); }
+  .toc-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .toc-row a {
+    background: #f1f5f9;
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+  }
+  .toc-row a:hover { background: var(--accent); border-color: var(--accent); }
+
+  .overview {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .overview h2 { margin-top: 0; }
+  .placeholder { color: var(--text-secondary); font-style: italic; }
+
+  .lesson-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
+    scroll-margin-top: 16px;
+  }
+  .lesson-card-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .lesson-card-head h2 { margin: 0; }
+  .lesson-card-class { color: var(--text-secondary); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+  .student-challenge {
+    border-left: 3px solid var(--challenge-color);
+    padding-left: 12px;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin: 10px 0 16px;
+  }
+  .lesson-card h3 { margin: 16px 0 6px; font-size: 1rem; color: var(--think-color); }
+  .lesson-card h3:first-of-type { margin-top: 16px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img class="header-logo-aisom" src="images/AISchoolofMagicLogo.png" alt="AI School of Magic logo">
+  <div class="header-text">
+    <h1>&#128214; Teacher Guide</h1>
+    <p>What's actually happening under each lesson, and how to help when it doesn't work.</p>
+  </div>
+  <a class="back-btn" href="index.html">&#8592; Back to Lessons</a>
+</div>
+
+<main>
+  <div class="overview">
+    <h2>Overview</h2>
+    <p><b>Browser:</b> Chrome or Edge only, on a computer or Android phone — not Safari, iPhone/iPad, or Firefox.
+      The app needs Web Bluetooth to talk to the Double Motor; worth confirming your classroom's devices support it
+      before the period starts.</p>
+    <p><b>Nothing is saved:</b> there's no server and no accounts — every recorded motion and trained model lives
+      only in the browser tab's memory. A reload clears everything. Plan around that: either keep the tab open
+      across a multi-day unit, or expect students to re-record when picking a lesson back up.</p>
+    <p><b>Two knobs worth knowing before you're in front of a class:</b> the Recognition threshold slider
+      (Lesson 1, default 50%) controls how close a cast needs to be to count as recognized, and the Number of
+      groups slider (Class 2 Lesson 1, default 3) tells k-means how many clusters to look for. Both are meant to
+      be tuned per class, not left on defaults.</p>
+    <p><b>How the AI actually works, in one paragraph:</b> every Class 1 lesson (0-5) runs on one algorithm,
+      K-Nearest Neighbors. &ldquo;Training&rdquo; just means saving example recordings; recognizing a new cast
+      means measuring how close it is to those saved examples and picking the closest match. Nothing is hidden —
+      any lesson's result traces back to &ldquo;which saved examples ended up closest, and was that close enough
+      (the threshold)?&rdquo; Class 2 Lesson 1 uses a different algorithm, k-means clustering, which groups
+      unlabeled recordings by mutual closeness without ever being told what the groups are. Class 2 Lesson 2 then
+      reuses the same KNN machinery from Class 1, just with the k-means groups as its labels instead of
+      human-given ones. Both are implemented from scratch in <code>wand_ml.py</code> — no scikit-learn, no cloud
+      API — specifically so nothing here is a black box.</p>
+  </div>
+
+  <nav class="toc" aria-label="Jump to a lesson">
+    <h2>Class 1: Supervised Learning</h2>
+    <div class="toc-row">
+      <a href="#l0">0. Build Your Wand</a>
+      <a href="#l1">1. Teach a Spell</a>
+      <a href="#l2">2. Friend Test</a>
+      <a href="#l3">3. Data Bias</a>
+      <a href="#lwho">4. Who Cast It?</a>
+      <a href="#l4">5. Data Cleaning</a>
+    </div>
+    <h2 style="margin-top: 10px;">Class 2: Unsupervised Learning</h2>
+    <div class="toc-row">
+      <a href="#l5">1. Hidden Styles</a>
+      <a href="#l6">2. New Spells</a>
+    </div>
+  </nav>
+
+  <!-- Lesson card template (repeated per lesson, placeholder copy only) -->
+  <section class="lesson-card" id="l0">
+    <div class="lesson-card-head">
+      <span class="lesson-card-class">Class 1</span>
+      <h2>Lesson 0: Build Your Wand</h2>
+    </div>
+    <p class="student-challenge">Student challenge: &ldquo;Build a magic wand and create different types of spells!&rdquo;</p>
+    <h3>What's actually happening</h3>
+    <p>No AI yet — this lesson is entirely about the hardware. The Double Motor's built-in IMU (accelerometer +
+      gyroscope) streams six numbers continuously (<code>[ax, ay, az, gx, gy, gz]</code>) once connected; every
+      later lesson's &ldquo;recording&rdquo; is just buffering that stream while a button is held.</p>
+    <h3>What &ldquo;working&rdquo; looks like</h3>
+    <p>The light blinks <em>and</em> beeps (not just glows) before it shows up in the browser's device picker, the
+      wand is built securely enough that the sensor doesn't shift mid-cast, and each student has picked one
+      consistent grip/orientation they'll reuse for the rest of the unit.</p>
+    <h3>Common snags &amp; fixes</h3>
+    <ul>
+      <li>Web Bluetooth only works in Chrome or Edge, on a computer or Android phone — confirm your classroom's
+        devices support it before the period starts, not during.</li>
+      <li>Pairing needs two presses of the Double Motor's button: one sets the color, the second arms it
+        (blink + beep) so it appears in the picker. A wand that's only glowing solid needs a second press.</li>
+      <li>Flaky pairing usually means Bluetooth interference — move the wand closer to the laptop and away from
+        other Bluetooth devices in the room.</li>
+      <li>A loose or inconsistent grip is the single biggest cause of &ldquo;spell not recognized&rdquo; two
+        lessons from now — worth getting right here rather than fixing later.</li>
+    </ul>
+    <h3>Discussion angle</h3>
+    <p>The two &ldquo;Think Like&rdquo; prompts (which motions are easiest/hardest to tell apart, how many
+      examples give good accuracy) are predictions students can't check yet. Consider having them write a guess
+      down now, then revisit it after Lesson 1's results.</p>
+  </section>
+
+  <section class="lesson-card" id="l1">
+    <div class="lesson-card-head">
+      <span class="lesson-card-class">Class 1</span>
+      <h2>Lesson 1: Teach Your Wand a Spell</h2>
+    </div>
+    <p class="student-challenge">Student challenge: &ldquo;Teach your wand to recognize one spell, just by showing it examples!&rdquo;</p>
+    <h3>What's actually happening</h3>
+    <p>This is K-Nearest Neighbors (KNN) in its simplest form. Each held-button recording becomes one saved data
+      point — a 6-axis motion trace, resampled to a fixed length (<code>resample_trace</code> in
+      <code>wand_ml.py</code>) so a fast cast and a slow cast can still be compared fairly. &ldquo;Training&rdquo;
+      doesn't compute anything clever; it just stores the examples. Recognizing a test cast means measuring its
+      distance to those saved examples and converting that into a confidence score — the Recognition threshold
+      slider is simply &ldquo;how close counts as a match.&rdquo;</p>
+    <h3>What &ldquo;working&rdquo; looks like</h3>
+    <p>6-8 examples that overlap closely on the &ldquo;Compare your examples&rdquo; chart, and a test cast
+      recognized comfortably above the threshold (default 50%).</p>
+    <h3>Common snags &amp; fixes</h3>
+    <ul>
+      <li>If a cast isn't recognized, lower the threshold slider before assuming the training data itself is bad —
+        it's often just a strictness setting.</li>
+      <li>The overlay chart is the fastest diagnostic in the whole app: if the lines don't sit on top of each
+        other, that's almost always why recognition is failing.</li>
+      <li>Flat time at the start of a line (before the spike) means the button was held before the motion started
+        — that's Lesson 5's &ldquo;dead time&rdquo; problem showing up early. Fine to mention now and revisit
+        properly later.</li>
+    </ul>
+    <h3>Discussion angle</h3>
+    <p>&ldquo;How many examples does a student need before they really learn something?&rdquo; is a genuine
+      sample-size question with no fixed right answer — but students should notice diminishing returns (going
+      from 2 to 6 examples helps a lot; 6 to 12 helps much less) if you have time to let them experiment.</p>
+  </section>
+
+  <section class="lesson-card" id="l2">
+    <div class="lesson-card-head">
+      <span class="lesson-card-class">Class 1</span>
+      <h2>Lesson 2: Can Your Friend Use It?</h2>
+    </div>
+    <p class="student-challenge">Student challenge: &ldquo;Can your friend use your gesture to do your spell?&rdquo;</p>
+    <h3>What's actually happening</h3>
+    <p>Nothing is retrained here — this lesson exists purely to expose a generalization gap. The model still only
+      knows the original caster's examples from Lesson 1; a different person's motion is run through it
+      unchanged.</p>
+    <h3>What &ldquo;working&rdquo; looks like</h3>
+    <p>Counterintuitively, a <em>low</em> recognition rate is the correct, expected outcome on this page. If a
+      friend's cast is recognized easily, that's fine too, but there's less to talk about in Lesson 3.</p>
+    <h3>Common snags &amp; fixes</h3>
+    <ul>
+      <li>Students will instinctively want to fix it immediately — hold them off. There's no retrain button on
+        this page on purpose; the failure is the data point Lesson 3 needs.</li>
+      <li>One low score could be a fluke; a second or third tester (if time allows) makes the pattern more
+        convincing before moving on.</li>
+    </ul>
+    <h3>Discussion angle</h3>
+    <p>This is the natural spot to zoom out from the wand and talk about real-world training bias — voice
+      assistants that struggle with some accents, or vision models trained mostly on one demographic. The wand
+      makes it a shared, felt experience rather than an abstract example.</p>
+  </section>
+
+  <section class="lesson-card" id="l3">
+    <div class="lesson-card-head">
+      <span class="lesson-card-class">Class 1</span>
+      <h2>Lesson 3: Improve It — Data Bias</h2>
+    </div>
+    <p class="student-challenge">Student challenge: &ldquo;Fix the bias — retrain your wand so it works for your friend too!&rdquo;</p>
+    <h3>What's actually happening</h3>
+    <p>Fine-tuning. The friend's Lesson 2 attempts get added into the <em>same</em> training set (originals are
+      kept, not replaced), and the KNN classifier &ldquo;retrains&rdquo; — really just re-saves the combined set.
+      The Before/After bars are two accuracy snapshots of the same test, run against the model before and after
+      that addition.</p>
+    <h3>What &ldquo;working&rdquo; looks like</h3>
+    <p>The After bar clearly higher than Before. A small or absent improvement isn't necessarily a bug — see
+      snags below.</p>
+    <h3>Common snags &amp; fixes</h3>
+    <ul>
+      <li>One added example is often not enough to close a generalization gap; if After barely moves, add more of
+        the friend's attempts (back to Lesson 2 to record a few more) rather than repeatedly retraining on the
+        same single example.</li>
+      <li>If accuracy still doesn't improve much even with more examples, the problem may be layered with
+        Lesson 5's dead-time issue rather than diversity alone — worth checking both.</li>
+    </ul>
+    <h3>Discussion angle</h3>
+    <p>&ldquo;Is one friend's data enough, or should you ask a whole group?&rdquo; scales nicely into a real
+      classroom activity — pool a few students' correction data and compare how much bigger the fix is with
+      3 people's examples versus 1.</p>
+  </section>
+
+  <section class="lesson-card" id="lwho">
+    <div class="lesson-card-head">
+      <span class="lesson-card-class">Class 1</span>
+      <h2>Lesson 4: Who Cast It?</h2>
+    </div>
+    <p class="student-challenge">Student challenge: &ldquo;Can the AI tell you and your friend apart, just by how you both cast the same spell?&rdquo;</p>
+    <h3>What's actually happening</h3>
+    <p>A second, independent KNN classifier, trained on the exact same recordings as Lessons 1-2 (no new capture
+      step) but with a different label attached — instead of &ldquo;is this a Fireball?&rdquo; it learns
+      &ldquo;whose Fireball is this?&rdquo; Same algorithm as every Class 1 lesson, just pointed at a different
+      question.</p>
+    <h3>What &ldquo;working&rdquo; looks like</h3>
+    <p>Correct guesses that improve as more casters and casts get added to the pool — this lesson is more
+      data-hungry than earlier ones, since it needs to tell multiple people apart rather than recognize one
+      person's motion.</p>
+    <h3>Common snags &amp; fixes</h3>
+    <ul>
+      <li>If training reports it needs more data, that's expected, not an error — send students back to
+        Lesson 2 to record a few more attempts (their own or a friend's).</li>
+      <li>The &ldquo;Correct?&rdquo; column only matches if the caster's name is typed exactly as it was in
+        Lesson 2's &ldquo;Tester's name&rdquo; field — spelling/capitalization mismatches will look like wrong
+        guesses that aren't.</li>
+      <li>Two people getting confused with each other often means their casting styles are genuinely similar —
+        try casting more differently on purpose, then retrain, and see if that widens the gap.</li>
+    </ul>
+    <h3>Discussion angle</h3>
+    <p>&ldquo;If AI can recognize how you move, what else could it learn about you without asking?&rdquo; is a
+      real hook into behavioral biometrics — gait recognition, keystroke dynamics, how phones fingerprint users by
+      how they hold or swipe them. Worth pausing the lesson for an actual conversation here rather than treating
+      it as just another on-page prompt.</p>
+  </section>
+
+  <section class="lesson-card" id="l4">
+    <div class="lesson-card-head">
+      <span class="lesson-card-class">Class 1</span>
+      <h2>Lesson 5: Improve It — Data Cleaning</h2>
+    </div>
+    <p class="student-challenge">Student challenge: &ldquo;Clean up your training data — trim the dead time before the real spell begins!&rdquo;</p>
+    <h3>What's actually happening</h3>
+    <p>A different data-quality fix from Lesson 3 — this one is about how clean each individual recording is, not
+      who's represented. If a student held the button for a moment before actually moving, that flat &ldquo;dead
+      time&rdquo; gets recorded as part of the example and confuses the distance comparison KNN relies on. The app
+      suggests an automatic crop point per recording; students can drag it before reapplying and retraining.</p>
+    <h3>What &ldquo;working&rdquo; looks like</h3>
+    <p>The After bar higher than Before once crops are applied and the model is retrained — ideally without
+      having added any new examples, which is the point (same data, cleaner).</p>
+    <h3>Common snags &amp; fixes</h3>
+    <ul>
+      <li>The suggested crop point is a guess, not a rule — if it visibly disagrees with what the chart shows,
+        trust the chart.</li>
+      <li>Over-cropping can cut into the real spell motion, not just the dead time, and will make accuracy worse,
+        not better. If that happens, drag the marker back and retrain again.</li>
+      <li>Students can revisit &ldquo;Load My Examples&rdquo; any time before committing, so encourage checking
+        crops rather than applying on the first guess.</li>
+    </ul>
+    <h3>Discussion angle</h3>
+    <p>Make the Lesson 3 vs. Lesson 5 contrast explicit — Lesson 3 fixed <em>who</em> was represented in the
+      training data; this lesson fixes <em>how clean</em> each individual recording is. Two different categories
+      of &ldquo;bad data,&rdquo; both worth naming.</p>
+  </section>
+
+  <section class="lesson-card" id="l5">
+    <div class="lesson-card-head">
+      <span class="lesson-card-class">Class 2</span>
+      <h2>Class 2, Lesson 1: Discover Hidden Magic Styles</h2>
+    </div>
+    <p class="student-challenge">Student challenge: &ldquo;Let the AI find its own groups — no labels, no hints!&rdquo;</p>
+    <h3>What's actually happening</h3>
+    <p>Unsupervised learning via k-means clustering (<code>KMeansCluster</code> in <code>wand_ml.py</code>, also
+      from scratch). Students record unlabeled &ldquo;mystery motions&rdquo; and the algorithm groups them by
+      mutual similarity — it's never told what the groups are, only how many to look for (the &ldquo;Number of
+      groups&rdquo; slider). The scatter plot is a simplified 2D view (roughly: how big vs. how twisty the motion
+      was); the algorithm itself compares the full 6-axis motion shape, so two dots that look close on the plot
+      can represent motions that are more different than they appear.</p>
+    <h3>Classroom logistics</h3>
+    <p>This lesson works best when a teacher secretly assigns 2-3 distinct motions across the class, so there's
+      real hidden structure for k-means to find rather than genuinely random motions. Because there's no server
+      or accounts, pooling data across a whole class means each student exports their motions to a JSON file and
+      hands it to whoever will run &ldquo;Find Patterns&rdquo; — over Google Drive, your classroom app, or email,
+      whatever your class already uses for file handoff — who then imports every file before Step 3.</p>
+    <h3>What &ldquo;working&rdquo; looks like</h3>
+    <p>Distinct, well-separated clusters on the scatter plot when k matches however many motions were actually
+      (secretly) assigned.</p>
+    <h3>Common snags &amp; fixes</h3>
+    <ul>
+      <li>Motions that are too similar to each other are hard for the algorithm (and for students eyeballing the
+        plot) to separate — this is expected, not a failure.</li>
+      <li>A k that doesn't match the real number of groups will split things oddly; encourage trying a few
+        different values rather than treating the first result as final.</li>
+      <li>The optional &ldquo;Clean Up Your Mystery Motions&rdquo; crop tool exists for the same dead-time issue
+        as Lesson 5's supervised counterpart — it's collapsed by default and only worth opening if the groups
+        look messier than expected.</li>
+    </ul>
+    <h3>Discussion angle</h3>
+    <p>Have students privately write down how they'd group the motions before clicking &ldquo;Find
+      Patterns&rdquo; — a lightweight pre-registration exercise that makes comparing their guess to the
+      algorithm's grouping much more interesting.</p>
+  </section>
+
+  <section class="lesson-card" id="l6">
+    <div class="lesson-card-head">
+      <span class="lesson-card-class">Class 2</span>
+      <h2>Class 2, Lesson 2: Make New Spells</h2>
+    </div>
+    <p class="student-challenge">Student challenge: &ldquo;Turn the AI's discoveries into brand-new spells you can cast!&rdquo;</p>
+    <h3>What's actually happening</h3>
+    <p>This closes the loop between the two classes. It takes the clusters k-means found in Lesson 5 (Class 2),
+      lets students name each one, and then reuses the exact same KNN recognition machinery from Class 1 — just
+      with the discovered clusters as labels instead of labels a human assigned up front.</p>
+    <h3>What &ldquo;working&rdquo; looks like</h3>
+    <p>The wand's light/beep feedback correctly distinguishes each named spell during casting.</p>
+    <h3>Common snags &amp; fixes</h3>
+    <ul>
+      <li>If a spell isn't being recognized, the root cause is usually back in Lesson 5 — that cluster was
+        probably messy or overlapped with another group on the scatter plot, not a problem with the naming step
+        itself.</li>
+      <li>Encourage casting both carefully and sloppily once spells are saved, to see how much slack the
+        recognizer actually has.</li>
+    </ul>
+    <h3>Discussion angle</h3>
+    <p>&ldquo;What would you call a motion the AI grouped together, before you even tried it?&rdquo; is a nice
+      bridge to how humans routinely impose labels onto statistical structure after the fact — which is literally
+      what just happened in this lesson.</p>
+  </section>
+</main>
+
+</body>
+</html>
