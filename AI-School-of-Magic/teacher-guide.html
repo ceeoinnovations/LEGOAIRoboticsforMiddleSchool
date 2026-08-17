@@ -122,6 +122,27 @@
   }
   .lesson-card h3 { margin: 16px 0 6px; font-size: 1rem; color: var(--think-color); }
   .lesson-card h3:first-of-type { margin-top: 16px; }
+
+  .standards h3 { margin: 20px 0 6px; font-size: 1rem; color: var(--think-color); }
+  .standards h3:first-of-type { margin-top: 16px; }
+  .standards ul { margin: 0; padding-left: 20px; line-height: 1.6; }
+  .standards li { margin-bottom: 6px; }
+  .standards-table-wrap { overflow-x: auto; margin-top: 10px; }
+  .standards-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  .standards-table th, .standards-table td {
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    text-align: left;
+    vertical-align: top;
+  }
+  .standards-table th { background: #f1f5f9; color: var(--text-secondary); font-weight: 700; }
+  .standards-note {
+    margin-top: 12px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    border-left: 3px solid var(--border);
+    padding-left: 12px;
+  }
 </style>
 </head>
 <body>
@@ -185,6 +206,10 @@
     <div class="toc-row">
       <a href="#l5">1. Hidden Styles</a>
       <a href="#l6">2. New Spells</a>
+    </div>
+    <h2 style="margin-top: 10px;">Reference</h2>
+    <div class="toc-row">
+      <a href="#standards">&#128203; Standards Alignment</a>
     </div>
   </nav>
 
@@ -456,6 +481,114 @@
     <p>&ldquo;What would you call a motion the AI grouped together, before you even tried it?&rdquo; is a nice
       bridge to how humans routinely impose labels onto statistical structure after the fact — which is literally
       what just happened in this lesson.</p>
+  </section>
+
+  <section class="overview standards" id="standards">
+    <h2>Standards Alignment</h2>
+    <p>This progression follows the same conceptual arc as the 2026 CSTA AI guidance: students first learn
+      <strong>how AI systems work</strong>, then <strong>experiment with how data changes model behavior</strong>,
+      and finally <strong>reason about fairness, bias, and appropriate use</strong> — using evidence gathered from
+      their own trained models rather than an abstract lecture.</p>
+
+    <h3>If you're teaching a general middle school CS class</h3>
+    <p>The progression is a strong match for the <strong>foundational</strong> AI standards because students are:</p>
+    <ul>
+      <li>observing how machine learning behaves rather than treating it as a black box,</li>
+      <li>testing hypotheses about why models make particular decisions,</li>
+      <li>improving model performance by modifying the training data,</li>
+      <li>discussing fairness, representation, and bias through evidence rather than lecture.</li>
+    </ul>
+
+    <h3>If you're teaching an AI elective or advanced high school course</h3>
+    <p>The same activities also introduce several <strong>AI Specialty</strong> standards:</p>
+    <ul>
+      <li><strong>S1-AIN-DD-02</strong> &ndash; Modify AI system training data to improve fairness and accuracy.
+        Lesson 3's fine-tune-with-a-friend's-examples activity and Lesson 5's crop-and-retrain activity both
+        directly demonstrate this.</li>
+      <li><strong>S1-AIN-HR-09</strong> &ndash; Analyze the potential biases and limitations of AI systems,
+        supported by Lesson 2's generalization-gap discussion and Lesson 4's privacy/behavioral-biometrics
+        discussion.</li>
+      <li><strong>S2-AIN-DD-01</strong> &ndash; Analyze problems that can be addressed using unsupervised
+        learning, addressed directly by Class 2 Lesson 1's clustering activity.</li>
+    </ul>
+    <p class="standards-note"><strong>One correction from an earlier draft of this alignment:</strong>
+      <strong>S1-AIN-DD-03</strong> ("create an application using a <em>prebuilt</em> supervised learning model")
+      does <em>not</em> apply here — this app's classifier isn't a prebuilt LEGO CS&amp;AI model. It's a from-scratch
+      KNN/k-means implementation in <code>wand_ml.py</code>, deliberately written that way (no scikit-learn, no
+      cloud API) so students — and teachers — can inspect exactly how it works rather than treating it as a
+      black box. If anything, that makes this a better fit for standards about <em>building</em> or
+      <em>analyzing</em> an AI system than ones about assembling a prebuilt one.</p>
+
+    <h3>AP Computer Science Principles</h3>
+    <p>This sequence also aligns well with <strong>AP CSP</strong>, particularly:</p>
+    <ul>
+      <li><strong>Big Idea 2: Data</strong> &mdash; students collect, compare, and improve datasets while seeing
+        how data quality affects computational outcomes.</li>
+      <li><strong>Big Idea 5: Impact of Computing</strong> &mdash; students examine bias, fairness, reliability,
+        and appropriate use of AI through firsthand experimentation rather than abstract discussion.</li>
+    </ul>
+
+    <h3>Lesson-by-lesson alignment</h3>
+    <p class="standards-note" style="margin-top: 0;">Adapted to this app's actual lessons rather than copied
+      verbatim from an earlier planning draft: two rows below were originally written against a slightly
+      different lesson design (a "Two Wizards, Two Spells" multi-spell activity, and a separate "Uneven Datasets"
+      activity) that isn't quite what's implemented. Lesson 4 here does the multi-class classification piece by
+      identifying <em>who</em> cast a spell rather than <em>which</em> spell was cast — same underlying mechanic.
+      The dataset-imbalance/fairness standard is folded into Lesson 3, since that's the activity that actually
+      demonstrates it; Lesson 5 (Data Cleaning) addresses a different data-quality issue — trimming noisy
+      recordings, not class imbalance — so it isn't forced into that same standard below.</p>
+    <div class="standards-table-wrap">
+      <table class="standards-table">
+        <thead>
+          <tr><th>Lesson</th><th>AI Concept</th><th>Strongest Standards Alignment</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1. Teach Your Wand a Spell</td>
+            <td>Supervised learning, collecting labeled data</td>
+            <td>Students examine how data is used to train a machine learning model and observe how labeled
+              examples influence predictions.</td>
+          </tr>
+          <tr>
+            <td>2. Can Your Friend Use It?</td>
+            <td>Generalization and bias</td>
+            <td>Students hypothesize how a machine learning model generates classifications from observed
+              behavior (<strong>MS-ALG-ML-06</strong>) and investigate why models fail when training data is
+              limited or unrepresentative (<strong>MS-ALG-ML-07</strong>).</td>
+          </tr>
+          <tr>
+            <td>3. Improve It &mdash; Data Bias</td>
+            <td>Improving model performance, dataset representation</td>
+            <td>Students improve accuracy by refining training data, and investigate how missing/underrepresented
+              examples affect model behavior and connect that to biased AI outcomes
+              (<strong>MS-ALG-ML-07</strong>). Pedagogically this is closer to "improving a model by adding
+              representative training data" than true fine-tuning.</td>
+          </tr>
+          <tr>
+            <td>4. Who Cast It?</td>
+            <td>Multi-class classification</td>
+            <td>Students observe how a model distinguishes among multiple learned categories (here, casters
+              rather than spells) and infer how it's making decisions (<strong>MS-ALG-ML-06</strong>); the
+              privacy discussion this lesson prompts also supports <strong>S1-AIN-HR-09</strong> above.</td>
+          </tr>
+          <tr>
+            <td>5. Improve It &mdash; Data Cleaning</td>
+            <td>Data quality / preprocessing</td>
+            <td>No single standard on this list targets noise/preprocessing specifically, but it reinforces AP
+              CSP's Big Idea 2 (how data quality affects computational outcomes) and demonstrates
+              <strong>S1-AIN-DD-02</strong> (modifying training data to improve accuracy) from a different angle
+              than Lesson 3.</td>
+          </tr>
+          <tr>
+            <td>Class 2, Lesson 1: Discover Hidden Magic Styles</td>
+            <td>Unsupervised learning</td>
+            <td>Students analyze a situation where AI discovers patterns without labels &mdash; an especially
+              strong match for <strong>S2-AIN-DD-01</strong>: analyze problems that can be addressed using
+              unsupervised learning.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 </main>
 
