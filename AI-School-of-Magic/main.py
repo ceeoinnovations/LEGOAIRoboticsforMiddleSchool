@@ -486,7 +486,11 @@ def l2_reset(e=None):
 
 _lesson3_results = []
 
-def l3_add_to_training(e=None):
+def l3_add_and_retrain(e=None):
+    """Adding friend data and retraining are never done separately — this
+    lesson's whole point is fine-tuning on the new data — so one button
+    does both. Skips the retrain step entirely (rather than retraining on
+    unchanged data) when there's nothing new to add."""
     added = 0
     for rec in _datasets['friend_test']:
         if not rec['added_to_training']:
@@ -494,11 +498,11 @@ def l3_add_to_training(e=None):
             rec['added_to_training'] = True
             added += 1
     _refresh_counts()
-    if added:
-        log(f"Added {added} example(s) from Lesson 2 into the training set.")
-        document.getElementById('btn-l3-retrain').disabled = False
-    else:
+    if not added:
         log("No new examples to add — run some test casts in Lesson 2 first.")
+        return
+    log(f"Added {added} example(s) from Lesson 2 into the training set.")
+    l3_retrain()
 
 def l3_retrain(e=None):
     global knn_fireball
@@ -706,13 +710,16 @@ def l4_delete_example(idx):
     log(f"Removed example #{idx + 1} (source: {removed.get('source', '?')}).")
     l4_load_examples()
 
-def l4_apply_crops(e=None):
+def l4_apply_crops_and_retrain(e=None):
+    """Applying crops and retraining are never done separately — nothing
+    observable changes in between, and this lesson's copy already frames
+    them as one step — so one button does both."""
     if not _crop_originals:
         log("Load your examples first.")
         return
     examples = _datasets['fireball']
 
-    # Lesson 3's l3_add_to_training merges each Lesson 2 friend cast into
+    # Lesson 3's l3_add_and_retrain merges each Lesson 2 friend cast into
     # _datasets['fireball'] by reference (no copy), so a fireball entry
     # whose source isn't 'you' is literally the same list object as some
     # friend_test record's trace, at least until one side crops it (a slice
@@ -763,7 +770,7 @@ def l4_apply_crops(e=None):
     if friend_changed:
         msg += f" Also auto-trimmed {friend_changed} friend test cast(s) that hadn't been hand-cropped, so Lesson 4's identity classifier stays consistent."
     log(msg)
-    document.getElementById('btn-l4-retrain').disabled = False
+    l4_retrain()
 
 def l4_retrain(e=None):
     global knn_fireball
