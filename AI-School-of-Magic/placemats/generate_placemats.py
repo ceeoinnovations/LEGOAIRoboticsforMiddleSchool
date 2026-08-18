@@ -104,10 +104,10 @@ def render_placemat(lesson: dict) -> str:
         m = re.match(r"(?i)think\s+like\s+(.*)", heading)
         who = m.group(1) if m else heading
         think_html += f"""
-        <div class="think-box">
-          <h3>Think Like <em>{who}</em></h3>
+        <fieldset class="think-box">
+          <legend>Think Like <em>{who}</em></legend>
           <p>{question}</p>
-        </div>"""
+        </fieldset>"""
 
     building_html = ""
     if lesson["building_ideas"]:
@@ -145,26 +145,30 @@ def render_placemat(lesson: dict) -> str:
     border-radius: 4px;
     margin-bottom: 6px;
   }}
-  h1 {{ font-size: 1.5rem; margin: 0; color: #444; }}
+  h1 {{ font-size: 1.7rem; font-weight: 800; margin: 0; color: #444; }}
   .logo {{ height: 40px; }}
   /* Fixed box dimensions per the reference placemat template:
      Challenge 6.39in x 4.55in, Think Like 3.12in x 1.3in each,
      Building Ideas 3in x 2.12in each (3 stacked in the sidebar). */
   .body {{ display: flex; align-items: flex-start; gap: 0.3in; }}
   .challenge-col {{ width: 6.39in; display: flex; flex-direction: column; gap: 0.15in; flex: none; }}
+  /* Both boxes use <fieldset>/<legend> so the border breaks around the
+     label like the reference template's notched Challenge/Think Like
+     headings, instead of the label sitting inside a solid box. */
+  fieldset {{ margin: 0; min-width: 0; }}
   .challenge-box {{
     box-sizing: border-box;
     width: 6.39in;
     height: 4.55in;
     border: 3px solid {CORAL};
     border-radius: 4px;
-    padding: 10px 16px;
+    padding: 4px 16px 10px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
   }}
-  .challenge-box h3 {{ color: {CORAL}; margin: 0 0 6px; font-size: 1.1rem; }}
-  .challenge-box p {{ margin: 0 0 6px; font-size: 1rem; }}
+  .challenge-box legend {{ color: {CORAL}; font-weight: 700; font-size: 1.15rem; padding: 0 8px; margin-left: 4px; }}
+  .challenge-box p {{ margin: 4px 0 6px; font-size: 1rem; }}
   .challenge-img {{ flex: 1; min-height: 0; width: 100%; object-fit: contain; }}
   .think-row {{ width: 6.39in; display: flex; gap: 0.15in; }}
   .think-box {{
@@ -174,18 +178,20 @@ def render_placemat(lesson: dict) -> str:
     flex: none;
     border: 2px solid {TEAL};
     border-radius: 4px;
-    padding: 8px 12px;
+    padding: 2px 12px 8px;
     overflow: hidden;
   }}
-  .think-box h3 {{ color: {TEAL}; margin: 0 0 4px; font-size: 0.95rem; }}
-  .think-box h3 em {{ text-decoration: underline; font-style: italic; }}
-  .think-box p {{ margin: 0; font-size: 0.9rem; }}
+  .think-box legend {{ color: {TEAL}; font-weight: 700; font-size: 0.95rem; padding: 0 6px; margin-left: 3px; }}
+  .think-box legend em {{ text-decoration: underline; font-style: italic; }}
+  .think-box p {{ margin: 2px 0 0; font-size: 0.9rem; }}
   .sidebar {{ flex: none; display: flex; flex-direction: column; }}
   .sidebar-header {{
     background: {TEAL};
     color: white;
     font-weight: 700;
     font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
     padding: 6px 14px;
     border-radius: 4px;
     margin-bottom: 0.1in;
@@ -195,15 +201,13 @@ def render_placemat(lesson: dict) -> str:
     width: 3in;
     height: 2.12in;
     object-fit: contain;
-    border-radius: 4px;
     margin-bottom: 0.06in;
   }}
   .building-idea-slot {{
     box-sizing: border-box;
     width: 3in;
     height: 2.12in;
-    border: 1px dashed #ccc;
-    border-radius: 4px;
+    border-bottom: 1px solid #ccc;
     margin-bottom: 0.06in;
   }}
   .footer {{ margin-top: 8px; font-size: 0.65rem; color: #999; text-align: center; }}
@@ -219,11 +223,11 @@ def render_placemat(lesson: dict) -> str:
   </div>
   <div class="body">
     <div class="challenge-col">
-      <div class="challenge-box">
-        <h3>Challenge</h3>
+      <fieldset class="challenge-box">
+        <legend>Challenge</legend>
         {challenge_p_html}
         {challenge_img_html}
-      </div>
+      </fieldset>
       <div class="think-row">
         {think_html}
       </div>
