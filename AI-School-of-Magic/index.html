@@ -314,6 +314,13 @@
   .slider-group input[type="range"] { width: 100%; }
   .slider-group input[type="text"] { font-family: inherit; font-size: 0.95rem; }
 
+  .spell-config { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin: 10px 0; }
+  .spell-config-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-top: 8px; }
+  .spell-config-field { display: flex; align-items: center; gap: 6px; }
+  .spell-config-field label { font-size: 0.85rem; font-weight: 500; }
+  .spell-config select { font-family: inherit; font-size: 0.9rem; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border); }
+  .color-swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(0, 0, 0, 0.2); }
+
   input[type="text"] {
     padding: 8px 10px;
     border-radius: 6px;
@@ -1176,8 +1183,7 @@
       </div>
 
       <p class="lesson-intro">Use the groups the AI discovered in Lesson 5 as brand-new spell categories. Give each
-        group a name, save them, then cast your new spells — the wand will light up and beep differently for each
-        one it recognizes.</p>
+        group a name, pick the light color and beep pattern it should trigger, then save and cast your new spells.</p>
     </details>
 
     <div class="panel main-content">
@@ -1790,6 +1796,19 @@
   };
 
   // ── Lesson 6 cluster naming inputs ──
+  // Color/pattern keys match the LEGO_COLOR_*/SOUND_PATTERN_BEEP_* suffixes
+  // main.py builds with getattr(le, ...) — keep the two lists in sync.
+  const SPELL_COLOR_OPTIONS = [
+    ['RED', 'Red', '#de1a21'], ['ORANGE', 'Orange', '#f57d20'], ['YELLOW', 'Yellow', '#ffd400'],
+    ['GREEN', 'Green', '#61a836'], ['TEAL', 'Teal', '#00807a'], ['AZURE', 'Azure', '#78bfea'],
+    ['BLUE', 'Blue', '#006cb8'], ['PURPLE', 'Purple', '#4b2f91'], ['MAGENTA', 'Magenta', '#e4599e'],
+    ['WHITE', 'White', '#ffffff'],
+  ];
+  const SPELL_PATTERN_OPTIONS = [
+    ['SINGLE', 'Single beep'], ['DOUBLE', 'Double beep'],
+    ['TRIPLE', 'Triple beep'], ['UP_MIDDLE_DOWN', 'Rising-falling beep'],
+  ];
+
   window.renderClusterNaming = function(containerId, clusterIds, counts) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -1798,12 +1817,53 @@
     for (let i = 0; i < clusterIds.length; i++) {
       const cid = clusterIds[i];
       const letter = letters[i] || String(i + 1);
-      html += '<div class="slider-group">' +
+      const defaultColor = SPELL_COLOR_OPTIONS[i % SPELL_COLOR_OPTIONS.length][0];
+
+      let colorSelect = '<select id="l6-color-' + cid + '">';
+      for (const [val, label] of SPELL_COLOR_OPTIONS) {
+        colorSelect += '<option value="' + val + '"' + (val === defaultColor ? ' selected' : '') + '>' + label + '</option>';
+      }
+      colorSelect += '</select>';
+
+      let patternSelect = '<select id="l6-pattern-' + cid + '">';
+      for (const [val, label] of SPELL_PATTERN_OPTIONS) {
+        patternSelect += '<option value="' + val + '">' + label + '</option>';
+      }
+      patternSelect += '</select>';
+
+      html += '<div class="spell-config">' +
         '<label for="l6-name-' + cid + '">Group ' + (i + 1) + ' (' + counts[i] + ' motions):</label>' +
         '<input type="text" id="l6-name-' + cid + '" value="Spell ' + letter + '">' +
-        '</div>';
+        '<div class="spell-config-row">' +
+          '<div class="spell-config-field">' +
+            '<label for="l6-color-' + cid + '">Light color:</label>' + colorSelect +
+          '</div>' +
+          '<div class="spell-config-field">' +
+            '<label for="l6-pattern-' + cid + '">Beep pattern:</label>' + patternSelect +
+          '</div>' +
+        '</div>' +
+      '</div>';
     }
     container.innerHTML = html;
+
+    // Swatch preview next to each color <select>, kept in sync on change.
+    // Purely decorative — the select's own text options are the accessible
+    // color choice, this just adds a quick visual for sighted students.
+    for (let i = 0; i < clusterIds.length; i++) {
+      const cid = clusterIds[i];
+      const select = document.getElementById('l6-color-' + cid);
+      if (!select) continue;
+      const swatch = document.createElement('span');
+      swatch.className = 'color-swatch';
+      swatch.setAttribute('aria-hidden', 'true');
+      const updateSwatch = function () {
+        const opt = SPELL_COLOR_OPTIONS.find(function (o) { return o[0] === select.value; });
+        swatch.style.background = opt ? opt[2] : 'transparent';
+      };
+      select.after(swatch);
+      select.addEventListener('change', updateSwatch);
+      updateSwatch();
+    }
   };
 
   // ── Before/after bars, shared by Lesson 3 (Data Bias) and Lesson 4

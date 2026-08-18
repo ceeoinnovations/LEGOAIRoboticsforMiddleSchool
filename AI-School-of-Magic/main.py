@@ -1012,10 +1012,14 @@ def l5_apply_mystery_crops(e=None):
 # CLASS 2, LESSON 2 — Make New Spells (name the discovered clusters, recognize them)
 # ══════════════════════════════════════════════════════════════
 
-_cluster_names = {}   # {cluster_id: name}
+_cluster_names = {}    # {cluster_id: name}
+_spell_feedback = {}   # {name: (LEGO_COLOR_* constant, SOUND_PATTERN_BEEP_* constant, pitch_idx)}
 knn_spells = None
-SPELL_LIGHT = [le.LEGO_COLOR_RED, le.LEGO_COLOR_BLUE, le.LEGO_COLOR_GREEN,
-               le.LEGO_COLOR_PURPLE, le.LEGO_COLOR_ORANGE, le.LEGO_COLOR_AZURE]
+
+# Suffixes match the <option value="..."> lists in renderClusterNaming's
+# SPELL_COLOR_OPTIONS/SPELL_PATTERN_OPTIONS (index.html) — kept in sync by hand.
+DEFAULT_SPELL_COLOR_KEYS = ['RED', 'ORANGE', 'YELLOW', 'GREEN', 'TEAL', 'AZURE',
+                            'BLUE', 'PURPLE', 'MAGENTA', 'WHITE']
 
 def l6_load_clusters(e=None):
     if km_mystery is None or not _mystery_assignments:
@@ -1028,13 +1032,23 @@ def l6_load_clusters(e=None):
     log(f"Loaded {len(cluster_ids)} cluster(s) from Lesson 5 — name them below.")
 
 def l6_save_names(e=None):
-    global _cluster_names, knn_spells
+    global _cluster_names, _spell_feedback, knn_spells
     cluster_ids = sorted(set(_mystery_assignments))
     _cluster_names = {}
-    for cid in cluster_ids:
-        el = document.getElementById(f'l6-name-{cid}')
-        name = (el.value or f'Spell {cid + 1}').strip() if el else f'Spell {cid + 1}'
+    _spell_feedback = {}
+    for i, cid in enumerate(cluster_ids):
+        name_el = document.getElementById(f'l6-name-{cid}')
+        name = (name_el.value or f'Spell {cid + 1}').strip() if name_el else f'Spell {cid + 1}'
         _cluster_names[cid] = name
+
+        color_el = document.getElementById(f'l6-color-{cid}')
+        color_key = color_el.value if color_el else DEFAULT_SPELL_COLOR_KEYS[i % len(DEFAULT_SPELL_COLOR_KEYS)]
+        pattern_el = document.getElementById(f'l6-pattern-{cid}')
+        pattern_key = pattern_el.value if pattern_el else 'SINGLE'
+
+        color = getattr(le, f'LEGO_COLOR_{color_key}', le.LEGO_COLOR_WHITE)
+        pattern = getattr(le, f'SOUND_PATTERN_BEEP_{pattern_key}', le.SOUND_PATTERN_BEEP_SINGLE)
+        _spell_feedback[name] = (color, pattern, i)
 
     traces = [rec['trace'] for rec in _datasets['mystery']]
     labels = [_cluster_names[c] for c in _mystery_assignments]
@@ -1056,15 +1070,10 @@ def l6_cast_stop(e=None):
     label, confidence, _ = knn_spells.predict(trace)
     window.setBadge('l6-cast-result', 'success', f"✨ {label}! ({confidence*100:.0f}% match)")
 
-    ordered_names = sorted(_cluster_names.values())
-    try:
-        idx = ordered_names.index(label)
-    except ValueError:
-        idx = 0
-    color = SPELL_LIGHT[idx % len(SPELL_LIGHT)]
+    color, pattern, idx = _spell_feedback.get(label, (le.LEGO_COLOR_WHITE, le.SOUND_PATTERN_BEEP_SINGLE, 0))
     try:
         dm_device.light_color(color, pattern=le.LIGHT_PATTERN_PULSE, intensity=100, blocking=False)
-        dm_device.beep(le.SOUND_PATTERN_BEEP_SINGLE, frequency=440 + idx * 120, blocking=False)
+        dm_device.beep(pattern, frequency=440 + idx * 120, blocking=False)
     except Exception as ex:
         log(f"(hardware feedback skipped: {ex})")
 
