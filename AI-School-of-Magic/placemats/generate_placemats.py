@@ -165,7 +165,7 @@ def render_placemat(lesson: dict) -> str:
   }}
   .challenge-box h3 {{ color: {CORAL}; margin: 0 0 6px; font-size: 1.1rem; }}
   .challenge-box p {{ margin: 0 0 6px; font-size: 1rem; }}
-  .challenge-img {{ max-height: 1.5in; max-width: 100%; object-fit: contain; margin-top: auto; align-self: center; }}
+  .challenge-img {{ flex: 1; min-height: 0; width: 100%; object-fit: contain; }}
   .think-row {{ width: 6.39in; display: flex; gap: 0.15in; }}
   .think-box {{
     box-sizing: border-box;
@@ -194,7 +194,7 @@ def render_placemat(lesson: dict) -> str:
     box-sizing: border-box;
     width: 3in;
     height: 2.12in;
-    object-fit: cover;
+    object-fit: contain;
     border-radius: 4px;
     margin-bottom: 0.06in;
   }}
