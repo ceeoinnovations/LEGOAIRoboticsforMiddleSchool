@@ -314,6 +314,13 @@
   .slider-group input[type="range"] { width: 100%; }
   .slider-group input[type="text"] { font-family: inherit; font-size: 0.95rem; }
 
+  /* Narrow, few-step sliders (e.g. "Number of groups"): full container width
+     spreads only a handful of values so far apart that clicking near a value
+     visually can miss it entirely. Cap the width so each step is a short,
+     predictable distance, and label every step so the target is visible. */
+  .k-slider-group input[type="range"] { width: 260px; max-width: 100%; }
+  .k-slider-labels { display: flex; justify-content: space-between; width: 260px; max-width: 100%; padding: 0 8px; font-size: 0.8rem; color: var(--text-secondary); }
+
   .spell-config { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin: 10px 0; }
   .spell-config-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-top: 8px; }
   .spell-config-field { display: flex; align-items: center; gap: 6px; }
@@ -1130,10 +1137,20 @@
 
       <div class="subsection">
         <h3>Step 3: Find the patterns</h3>
-        <div class="slider-group">
-          <label>Number of groups to look for: <span id="l5-k-val">3</span></label>
-          <input type="range" id="l5-k" min="2" max="6" step="1" value="3"
+        <div class="slider-group k-slider-group">
+          <label for="l5-k">Number of groups to look for: <span id="l5-k-val">3</span></label>
+          <input type="range" id="l5-k" min="2" max="6" step="1" value="3" list="l5-k-ticks"
                  oninput="document.getElementById('l5-k-val').innerText = this.value">
+          <datalist id="l5-k-ticks">
+            <option value="2"></option>
+            <option value="3"></option>
+            <option value="4"></option>
+            <option value="5"></option>
+            <option value="6"></option>
+          </datalist>
+          <div class="k-slider-labels" aria-hidden="true">
+            <span>2</span><span>3</span><span>4</span><span>5</span><span>6</span>
+          </div>
         </div>
         <div class="actions-row">
           <button id="btn-l5-find-patterns" py-click="l5_find_patterns" disabled>Find Patterns</button>
