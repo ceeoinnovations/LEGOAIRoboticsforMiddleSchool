@@ -163,10 +163,12 @@
       The app needs Web Bluetooth to talk to the Double Motors which (as of right now) those don't support.</p>
     <p><b>Nothing is saved automatically:</b> there's no server and no accounts — every recorded motion and trained
       model lives only in the browser tab's memory, and a reload clears everything. Both classes now have a manual
-      save: Class 1 has "Save My Data"/"Load Saved Data" in the sidebar (raw recordings only — students click
-      Train/Retrain again after loading), and Class 2 has "Export"/"Import" for pooling mystery motions across the
-      class. Neither happens automatically, so still plan around it: either keep the tab open across a multi-day
-      unit, or have students save before closing the tab.</p>
+      save: Class 1 has a "Save Examples" tab with "Save My Data"/"Load Saved Data" (raw recordings only — students
+      click Train/Retrain again after loading), and Class 2, Lesson 1 has "Export"/"Import" for pooling mystery
+      motions across the class. These are two different file formats, so importing one where the other belongs
+      gets rejected — the app now tells students which tab to use when that happens. Neither save happens
+      automatically, so still plan around it: either keep the tab open across a multi-day unit, or have students
+      save before closing the tab.</p>
     <p><b>Two knobs worth knowing before you're in front of a
       class:</b> the Recognition threshold slider (Lesson 1, default
       50%) controls how similar to the examples a cast needs to be to

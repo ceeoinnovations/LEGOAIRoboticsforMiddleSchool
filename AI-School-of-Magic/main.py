@@ -373,7 +373,11 @@ def _import_class1_json(text):
     fireball = data.get('fireball') if isinstance(data, dict) else None
     friend_test = data.get('friend_test') if isinstance(data, dict) else None
     if not isinstance(fireball, list) and not isinstance(friend_test, list):
-        log("That file doesn't look like a saved Class 1 session — skipped.")
+        if isinstance(data, dict) and isinstance(data.get('motions'), list):
+            log("That looks like a mystery-motions export from Class 2, Lesson 1, not a saved Class 1 "
+                "session — import it there instead, with \"Import Motions from File(s)\".")
+        else:
+            log("That file doesn't look like a saved Class 1 session — skipped.")
         return
     student = (data.get('student') or 'Imported') if isinstance(data, dict) else 'Imported'
 
@@ -827,7 +831,12 @@ def _import_mystery_json(text):
         return
     motions = data.get('motions') if isinstance(data, dict) else None
     if not isinstance(motions, list):
-        log("That file doesn't look like an exported mystery-motions file — skipped.")
+        if isinstance(data, dict) and (isinstance(data.get('fireball'), list)
+                                        or isinstance(data.get('friend_test'), list)):
+            log("That looks like a saved Class 1 session, not a mystery-motions export — import it on the "
+                "\"Save Examples\" tab instead, with \"Load Saved Data\".")
+        else:
+            log("That file doesn't look like an exported mystery-motions file — skipped.")
         return
     student = (data.get('student') or 'Imported') if isinstance(data, dict) else 'Imported'
     added = 0

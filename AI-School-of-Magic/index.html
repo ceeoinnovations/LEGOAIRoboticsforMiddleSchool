@@ -465,6 +465,7 @@
   <button class="tab-btn" id="tab-btn-l3" onclick="switchLessonPage('l3')">3. Data Bias</button>
   <button class="tab-btn" id="tab-btn-lwho" onclick="switchLessonPage('lwho')">4. Who Cast It?</button>
   <button class="tab-btn" id="tab-btn-l4" onclick="switchLessonPage('l4')">5. Data Cleaning</button>
+  <button class="tab-btn" id="tab-btn-lsave" onclick="switchLessonPage('lsave')">6. Save Examples</button>
 </div>
 
 <div class="tab-bar hidden" id="tab-bar-c2">
@@ -493,21 +494,6 @@
       <div class="row"><span>Mystery motions</span><b id="count-mystery">0</b></div>
     </div>
  <button id="btn-l1-clear" class="danger" py-click="l1_clear">Clear Training Data</button>
-
-    <h3 style="margin-bottom: 0;">Save/Load Class 1 Data</h3>
-    <p class="lesson-intro" style="margin: 0;">Saves Lessons 1-5's raw recordings (Fireball examples + friend test
-      casts) to a file so you can pick up next class. Trained models and result tables aren't saved — click
-      Train/Retrain again after loading.</p>
-    <div class="slider-group">
-      <label for="l1-student-name">Your name (used in the saved file):</label>
-      <input type="text" id="l1-student-name" placeholder="e.g. Alex">
-    </div>
-    <div class="actions-row">
-      <button id="btn-l1-export" py-click="l1_export_session">Save My Data</button>
-      <button id="btn-l1-import" onclick="document.getElementById('l1-import-input').click()">Load Saved Data</button>
-      <input type="file" id="l1-import-input" accept="application/json,.json" multiple
-             style="display:none" onchange="wandImportClass1Session('l1-import-input')">
-    </div>
 
     <h3 style="margin-bottom: 0;">Logs</h3>
     <div class="terminal" id="terminal"></div>
@@ -995,6 +981,30 @@
     </div>
   </div>
 
+  <!-- Save Examples -->
+  <div class="page-content hidden" id="page-lsave">
+    <div class="panel main-content">
+      <h2>Save Examples</h2>
+
+      <p class="lesson-intro">Saves Lessons 1-5's raw recordings (Fireball examples + friend test
+        casts) to a file so you can pick up next class. Trained models and result tables aren't saved — click
+        Train/Retrain again after loading.</p>
+
+      <div class="subsection">
+        <div class="slider-group">
+          <label for="l1-student-name">Your name (used in the saved file):</label>
+          <input type="text" id="l1-student-name" placeholder="e.g. Alex">
+        </div>
+        <div class="actions-row">
+          <button id="btn-l1-export" py-click="l1_export_session">Save My Data</button>
+          <button id="btn-l1-import" onclick="document.getElementById('l1-import-input').click()">Load Saved Data</button>
+          <input type="file" id="l1-import-input" accept="application/json,.json" multiple
+                 style="display:none" onchange="wandImportClass1Session('l1-import-input')">
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Lesson 5 -->
   <div class="page-content hidden" id="page-l5">
     <div class="panel main-content">
@@ -1166,7 +1176,7 @@
 <script>
   // ── Tab switching ──
   window.switchLessonPage = function(name) {
-    ['l0', 'l1', 'l2', 'l3', 'lwho', 'l4', 'l5', 'l6'].forEach(function (p) {
+    ['l0', 'l1', 'l2', 'l3', 'lwho', 'l4', 'lsave', 'l5', 'l6'].forEach(function (p) {
       const el = document.getElementById('page-' + p);
       const btn = document.getElementById('tab-btn-' + p);
       if (!el || !btn) return;
@@ -1179,7 +1189,7 @@
   //    Learning) — each class shows its own lesson tab row and jumps to that
   //    class's first lesson. Lesson ids (l0-l6) stay as-is in main.py; this
   //    is a display/nav-only grouping. ──
-  const CLASS_LESSONS = { c1: ['l0', 'l1', 'l2', 'l3', 'lwho', 'l4'], c2: ['l5', 'l6'] };
+  const CLASS_LESSONS = { c1: ['l0', 'l1', 'l2', 'l3', 'lwho', 'l4', 'lsave'], c2: ['l5', 'l6'] };
   window.switchClass = function(name) {
     Object.keys(CLASS_LESSONS).forEach(function (c) {
       const btn = document.getElementById('class-btn-' + c);
