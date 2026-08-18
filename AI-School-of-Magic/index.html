@@ -94,6 +94,14 @@
     gap: 15px;
   }
   .sidebar { flex: 0 0 240px; min-width: 240px; max-width: 240px; }
+  /* .page-content (not .main-content) is the actual flex child of
+     .container — .main-content is nested a level deeper, inside each
+     .page-content, so its flex:1 was inert. Without this, a lesson page
+     with no wide fixed-width element (e.g. Lesson 2 before its table
+     fills out) shrinks to its own max-content width instead of filling
+     the space beside the sidebar, making the whole lesson panel look
+     unexpectedly narrow. */
+  .page-content { flex: 1; min-width: 0; }
   .main-content { flex: 1; min-width: 0; }
 
   .device-card {
@@ -753,6 +761,17 @@
         </div>
       </div>
 
+      <div class="subsection">
+        <h3>Compare to your examples</h3>
+        <p class="lesson-intro" style="margin-bottom: 0;">The same "compare your examples" chart from Lesson 1 —
+          your Fireball training examples, with your tester's most recent cast highlighted as a dashed black line
+          on top. Does the dashed line look like the rest, or does it stand out? A cast that looks different from
+          your training examples is exactly why it might not get recognized.</p>
+        <p class="lesson-intro" id="l2-overlay-canvas-empty" style="margin-top: 8px;">Record Fireball examples in
+          Lesson 1 to see them compared here.</p>
+        <canvas class="overlay-canvas" id="l2-overlay-canvas" width="900" height="260" style="display: none;"></canvas>
+      </div>
+
       <details class="collapsible-box tips-tricks">
         <summary>Tips &amp; Tricks</summary>
         <ul>
@@ -760,6 +779,8 @@
           <li>Don't retrain after a failed attempt. The low accuracy IS the data you need for Lesson 3.</li>
           <li>Try a few different testers if you have them. One low score could be a fluke; three low scores is
             a pattern.</li>
+          <li>Look at the "Compare to your examples" chart to see WHY a cast succeeded or failed, not just
+            whether it did.</li>
         </ul>
       </details>
     </div>
@@ -1366,7 +1387,11 @@
   // recorded example, RAW elapsed time — deliberately not resampled/warped,
   // so uneven leading dead-time shows up as different-length flat runs).
   // currentTrace: same shape, for the most recent test cast, or null/undefined.
-  window.renderExampleOverlay = function(canvasId, traces, sampleInterval, currentTrace) {
+  // currentLabel: short phrase naming whose cast currentTrace is (defaults
+  // to 'your last cast'; Lesson 2 passes e.g. "Friend's last cast" so the
+  // same chart can highlight a tester's cast instead of your own).
+  window.renderExampleOverlay = function(canvasId, traces, sampleInterval, currentTrace, currentLabel) {
+    currentLabel = currentLabel || 'your last cast';
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
     const emptyMsg = document.getElementById(canvasId + '-empty');
@@ -1386,7 +1411,7 @@
     if (emptyMsg) emptyMsg.style.display = 'none';
     canvas.setAttribute('aria-label',
       (hasTraces ? traces.length + ' recorded example' + (traces.length === 1 ? '' : 's') : 'No recorded examples') +
-      (hasCurrent ? ', plus your most recent test cast, ' : ' ') +
+      (hasCurrent ? ', plus ' + currentLabel + ', ' : ' ') +
       'shown as accelerometer-magnitude lines over time.');
 
     const prepared = prepareCanvas(canvas);
@@ -1438,7 +1463,7 @@
       const lastI = currentTrace.length - 1;
       ctx.fillStyle = '#0f172a';
       ctx.font = 'bold 11px Inter, sans-serif';
-      ctx.fillText('← your last cast', xOf(lastI) + 6, yOf(currentTrace[lastI]));
+      ctx.fillText('← ' + currentLabel, xOf(lastI) + 6, yOf(currentTrace[lastI]));
     }
 
     ctx.fillStyle = '#64748b';
