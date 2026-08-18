@@ -3,6 +3,9 @@
 *~
 *.sb-*
 
+# Generated placemats (regenerate with AI-School-of-Magic/placemats/generate_placemats.py)
+AI-School-of-Magic/placemats/out/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
