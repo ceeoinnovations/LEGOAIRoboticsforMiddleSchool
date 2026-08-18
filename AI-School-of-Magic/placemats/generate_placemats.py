@@ -111,10 +111,10 @@ def render_placemat(lesson: dict) -> str:
 
     building_html = ""
     if lesson["building_ideas"]:
-        for src, alt in lesson["building_ideas"]:
+        for src, alt in lesson["building_ideas"][:3]:
             building_html += f'<img class="building-idea-img" src="../../images/{src.split("images/")[-1]}" alt="{alt}">'
     else:
-        building_html = '<div class="building-ideas-blank"><div class="rule"></div><div class="rule"></div><div class="rule"></div></div>'
+        building_html = '<div class="building-idea-slot"></div>' * 3
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -130,61 +130,83 @@ def render_placemat(lesson: dict) -> str:
     color: #333;
     width: 11in;
     height: 8.5in;
-    padding: 0.4in 0.5in;
+    padding: 0.35in 0.5in;
     display: flex;
     flex-direction: column;
   }}
-  .header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }}
+  .header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }}
   .badge {{
     display: inline-block;
     background: {TEAL_LIGHT};
     color: #14504f;
     font-weight: 700;
     font-size: 0.85rem;
-    padding: 5px 12px;
+    padding: 4px 12px;
     border-radius: 4px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }}
-  h1 {{ font-size: 1.7rem; margin: 0; color: #444; }}
-  .logo {{ height: 46px; }}
-  .body {{ display: flex; gap: 24px; flex: 1; min-height: 0; }}
-  .challenge-col {{ flex: 2; display: flex; flex-direction: column; gap: 14px; min-height: 0; }}
+  h1 {{ font-size: 1.5rem; margin: 0; color: #444; }}
+  .logo {{ height: 40px; }}
+  /* Fixed box dimensions per the reference placemat template:
+     Challenge 6.39in x 4.55in, Think Like 3.12in x 1.3in each,
+     Building Ideas 3in x 2.12in each (3 stacked in the sidebar). */
+  .body {{ display: flex; align-items: flex-start; gap: 0.3in; }}
+  .challenge-col {{ width: 6.39in; display: flex; flex-direction: column; gap: 0.15in; flex: none; }}
   .challenge-box {{
+    box-sizing: border-box;
+    width: 6.39in;
+    height: 4.55in;
     border: 3px solid {CORAL};
     border-radius: 4px;
     padding: 10px 16px;
-    flex: 1;
     overflow: hidden;
     display: flex;
     flex-direction: column;
   }}
   .challenge-box h3 {{ color: {CORAL}; margin: 0 0 6px; font-size: 1.1rem; }}
   .challenge-box p {{ margin: 0 0 6px; font-size: 1rem; }}
-  .challenge-img {{ max-height: 1.6in; max-width: 100%; object-fit: contain; margin-top: auto; align-self: center; }}
-  .think-row {{ display: flex; gap: 14px; }}
+  .challenge-img {{ max-height: 1.5in; max-width: 100%; object-fit: contain; margin-top: auto; align-self: center; }}
+  .think-row {{ width: 6.39in; display: flex; gap: 0.15in; }}
   .think-box {{
-    flex: 1;
+    box-sizing: border-box;
+    width: 3.12in;
+    height: 1.3in;
+    flex: none;
     border: 2px solid {TEAL};
     border-radius: 4px;
     padding: 8px 12px;
+    overflow: hidden;
   }}
   .think-box h3 {{ color: {TEAL}; margin: 0 0 4px; font-size: 0.95rem; }}
   .think-box h3 em {{ text-decoration: underline; font-style: italic; }}
   .think-box p {{ margin: 0; font-size: 0.9rem; }}
-  .sidebar {{ flex: 1; display: flex; flex-direction: column; }}
+  .sidebar {{ flex: none; display: flex; flex-direction: column; }}
   .sidebar-header {{
     background: {TEAL};
     color: white;
     font-weight: 700;
-    font-size: 0.95rem;
-    padding: 8px 14px;
+    font-size: 0.9rem;
+    padding: 6px 14px;
     border-radius: 4px;
-    margin-bottom: 12px;
+    margin-bottom: 0.1in;
   }}
-  .building-idea-img {{ max-width: 100%; margin-bottom: 10px; border-radius: 4px; }}
-  .building-ideas-blank {{ flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; }}
-  .rule {{ border-bottom: 1px solid #ccc; }}
-  .footer {{ margin-top: 12px; font-size: 0.7rem; color: #999; text-align: center; }}
+  .building-idea-img {{
+    box-sizing: border-box;
+    width: 3in;
+    height: 2.12in;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-bottom: 0.06in;
+  }}
+  .building-idea-slot {{
+    box-sizing: border-box;
+    width: 3in;
+    height: 2.12in;
+    border: 1px dashed #ccc;
+    border-radius: 4px;
+    margin-bottom: 0.06in;
+  }}
+  .footer {{ margin-top: 8px; font-size: 0.65rem; color: #999; text-align: center; }}
 </style>
 </head>
 <body>

@@ -24,15 +24,20 @@ title, `.challenge-box` (heading + paragraphs + optional image), the two
 content file — the app's own markup is the source of truth. This relies on
 those specific elements never containing nested `<div>`s, which holds today.
 
+## Box sizing
+
+Matches the reference template's fixed dimensions rather than stretching to
+fill the page: Challenge box 6.39in × 4.55in, each Think Like box 3.12in ×
+1.3in, each Building Ideas slot 3in × 2.12in (three stacked in the sidebar,
+truncating extra images past three — only Lesson 0 has that many today).
+Lessons with no Building Ideas images render three empty dashed slots so the
+sidebar height stays consistent across lessons.
+
 ## Known limitations (proof of concept, not production)
 
 - Only the template's front side (Challenge / Think Like / Building Ideas) is
   implemented. The back side (Building Tips / Code It! / Challenge Yourself)
   isn't, since that content doesn't exist in `index.html` yet.
-- The sidebar lays out Building Ideas images full-width and stacked; a lesson
-  with several images (currently only Lesson 0) can overflow onto a second
-  PDF page. Fine for Lesson 2 (today's use case); would need a thumbnail
-  grid to handle multi-image lessons cleanly.
 - Colors/spacing are a close eyeball match to the reference deck, not a
   pixel-exact reproduction (e.g. the "Think Like" boxes are plain rounded
   borders rather than the deck's corner-bracket line art).
