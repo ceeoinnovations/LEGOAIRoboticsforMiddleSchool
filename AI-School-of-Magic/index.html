@@ -495,6 +495,13 @@
     </div>
  <button id="btn-l1-clear" class="danger" py-click="l1_clear">Clear Training Data</button>
 
+    <h3 style="margin-bottom: 0;">Recognition threshold</h3>
+    <div class="slider-group">
+      <label>How similar a cast must be to count as recognized: <span id="l1-threshold-val">50</span>%</label>
+      <input type="range" id="l1-threshold" min="0" max="100" step="5" value="50"
+             oninput="document.getElementById('l1-threshold-val').innerText = this.value">
+    </div>
+
     <h3 style="margin-bottom: 0;">Logs</h3>
     <div class="terminal" id="terminal"></div>
   </div>
@@ -616,11 +623,9 @@
        </div>
       <div class="subsection">
         <h3>Step 3: Try casting it!</h3>
-        <div class="slider-group">
-          <label>Recognition threshold: <span id="l1-threshold-val">50</span>%</label>
-          <input type="range" id="l1-threshold" min="0" max="100" step="5" value="50"
-                 oninput="document.getElementById('l1-threshold-val').innerText = this.value">
-        </div>
+        <p class="lesson-intro" style="margin-bottom: 0;">The Recognition threshold slider in the left sidebar
+          controls how similar a cast needs to be to count as recognized — it applies here and in every later
+          lesson that tests a cast.</p>
         <button class="record-btn" id="btn-l1-cast" disabled
                 onmousedown="wandRecordStart('l1-cast')" onmouseup="wandRecordStop('l1-cast')"
                 onkeydown="wandKeyDown(event, 'l1-cast')" onkeyup="wandKeyUp(event, 'l1-cast')"
