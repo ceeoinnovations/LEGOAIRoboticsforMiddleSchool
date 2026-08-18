@@ -640,26 +640,52 @@ _crop_originals = {}    # example index (into _datasets['fireball']) -> its
                          # the same starting point rather than compounding.
 _lesson4_results = []
 
+_CROP_SAMPLE_INTERVAL = 0.05  # matches CROP_SAMPLE_INTERVAL in index.html
+
+
+def _read_crop_bounds(original_trace, start_el_id, end_el_id):
+    """Reads a crop card's start/end range-slider values (in seconds) and
+    converts them to trace indices, clamping so at least 4 samples are kept
+    between them. A missing/unparsable slider falls back to no trim on that
+    side (start=0, end=full length) rather than guessing."""
+    n = len(original_trace)
+    full_end_seconds = max(0, n - 1) * _CROP_SAMPLE_INTERVAL
+    start_el = document.getElementById(start_el_id)
+    end_el = document.getElementById(end_el_id)
+    try:
+        start_seconds = float(start_el.value) if start_el is not None else 0.0
+    except Exception:
+        start_seconds = 0.0
+    try:
+        end_seconds = float(end_el.value) if end_el is not None else full_end_seconds
+    except Exception:
+        end_seconds = full_end_seconds
+    start_idx = max(0, min(n - 4, round(start_seconds / _CROP_SAMPLE_INTERVAL)))
+    end_idx = max(start_idx + 4, min(n, round(end_seconds / _CROP_SAMPLE_INTERVAL) + 1))
+    return start_idx, end_idx
+
+
 def l4_load_examples(e=None):
     global _crop_originals
     examples = _datasets['fireball']
     if not examples:
         _crop_originals = {}
-        window.renderCropExamples('l4-crop-container', [], [], [], 'fireball')
+        window.renderCropExamples('l4-crop-container', [], [], [], 'fireball', [])
         document.getElementById('btn-l4-apply-crops').disabled = True
         log("No Fireball examples yet — record some in Lesson 1 first.")
         return
     _crop_originals = {i: ex['trace'] for i, ex in enumerate(examples)}
 
-    indices, traces, suggested = [], [], []
+    indices, traces, suggested, sources = [], [], [], []
     for i, ex in enumerate(examples):
         start_idx = detect_motion_start(ex['trace'])
         indices.append(i)
         traces.append(accel_magnitude(ex['trace']))
-        suggested.append(round(start_idx * 0.05, 3))
-    window.renderCropExamples('l4-crop-container', indices, traces, suggested, 'fireball')
+        suggested.append(round(start_idx * _CROP_SAMPLE_INTERVAL, 3))
+        sources.append(ex.get('source', 'you'))
+    window.renderCropExamples('l4-crop-container', indices, traces, suggested, 'fireball', sources)
     document.getElementById('btn-l4-apply-crops').disabled = False
-    log(f"Loaded {len(examples)} example(s) with a suggested crop point each. Drag any marker to adjust, then Apply Crops.")
+    log(f"Loaded {len(examples)} example(s) with a suggested crop point each. Drag either marker to adjust, then Apply Crops.")
 
 def l4_delete_example(idx):
     """Removes one example from the Fireball training set outright — for
@@ -681,30 +707,42 @@ def l4_apply_crops(e=None):
         log("Load your examples first.")
         return
     examples = _datasets['fireball']
+
+    # Lesson 3's l3_add_to_training merges each Lesson 2 friend cast into
+    # _datasets['fireball'] by reference (no copy), so a fireball entry
+    # whose source isn't 'you' is literally the same list object as some
+    # friend_test record's trace, at least until one side crops it (a slice
+    # makes a new list, breaking the aliasing). Build that link now, before
+    # any cropping happens below, so a hand crop on the fireball entry can
+    # be propagated back to the friend_test record it came from.
+    friend_by_trace_id = {id(rec['trace']): rec for rec in _datasets['friend_test']}
+
     changed = 0
+    synced = 0
     for i, original_trace in _crop_originals.items():
         if i >= len(examples):
             continue
-        el = document.getElementById(f'l4-crop-value-{i}')
-        if el is None:
-            continue
-        try:
-            crop_seconds = float(el.value)
-        except Exception:
-            crop_seconds = 0.0
-        start_idx = max(0, min(len(original_trace) - 4, round(crop_seconds / 0.05)))
-        examples[i]['trace'] = original_trace[start_idx:]
-        if start_idx > 0:
+        start_idx, end_idx = _read_crop_bounds(
+            original_trace, f'l4-crop-value-{i}', f'l4-crop-end-value-{i}')
+        cropped_trace = original_trace[start_idx:end_idx]
+        examples[i]['trace'] = cropped_trace
+        if start_idx > 0 or end_idx < len(original_trace):
             changed += 1
 
-    # Also auto-trim dead time from any Lesson 2 friend test casts that
-    # haven't been through this crop pass yet — otherwise Lesson 4's
-    # identity classifier would train 'you' on cleaned data next to
-    # un-cleaned friend data, an unfair/confusing mismatch. Friend casts
-    # aren't shown in this lesson's chart at all, so this applies the same
-    # detect_motion_start heuristic automatically rather than via a manual
-    # marker. 'cropped' guards against re-trimming the same recording every
-    # time this button is clicked again.
+        rec = friend_by_trace_id.get(id(original_trace))
+        if rec is not None:
+            rec['trace'] = cropped_trace
+            rec['cropped'] = True
+            synced += 1
+
+    # Auto-trim leading dead time from any Lesson 2 friend test casts that
+    # weren't part of the hand-crop pass above (never merged into the
+    # Fireball set via Lesson 3, so they never appeared in this tool) —
+    # otherwise Lesson 4's identity classifier would train 'you' on cleaned
+    # data next to un-cleaned friend data, an unfair/confusing mismatch.
+    # 'cropped' guards against re-trimming the same recording every time
+    # this button is clicked again, and against overwriting the hand crop
+    # a friend cast just got synced above.
     friend_changed = 0
     for rec in _datasets['friend_test']:
         if rec.get('cropped'):
@@ -715,9 +753,11 @@ def l4_apply_crops(e=None):
             friend_changed += 1
         rec['cropped'] = True
 
-    msg = f"Applied crops: trimmed dead time from {changed} of {len(_crop_originals)} example(s)."
+    msg = f"Applied crops: trimmed {changed} of {len(_crop_originals)} example(s)."
+    if synced:
+        msg += f" Synced {synced} hand-cropped friend test cast(s) to match."
     if friend_changed:
-        msg += f" Also auto-trimmed {friend_changed} friend test cast(s) so Lesson 4's identity classifier stays consistent."
+        msg += f" Also auto-trimmed {friend_changed} friend test cast(s) that hadn't been hand-cropped, so Lesson 4's identity classifier stays consistent."
     log(msg)
     document.getElementById('btn-l4-retrain').disabled = False
 
@@ -904,21 +944,22 @@ def l5_load_mystery_examples(e=None):
     examples = _datasets['mystery']
     if not examples:
         _crop_originals_mystery = {}
-        window.renderCropExamples('l5-mystery-crop-container', [], [], [], 'mystery')
+        window.renderCropExamples('l5-mystery-crop-container', [], [], [], 'mystery', [])
         document.getElementById('btn-l5-apply-mystery-crops').disabled = True
         log("No mystery motions yet — record some above first.")
         return
     _crop_originals_mystery = {i: ex['trace'] for i, ex in enumerate(examples)}
 
-    indices, traces, suggested = [], [], []
+    indices, traces, suggested, sources = [], [], [], []
     for i, ex in enumerate(examples):
         start_idx = detect_motion_start(ex['trace'])
         indices.append(i)
         traces.append(accel_magnitude(ex['trace']))
-        suggested.append(round(start_idx * 0.05, 3))
-    window.renderCropExamples('l5-mystery-crop-container', indices, traces, suggested, 'mystery')
+        suggested.append(round(start_idx * _CROP_SAMPLE_INTERVAL, 3))
+        sources.append(ex.get('source', 'you'))
+    window.renderCropExamples('l5-mystery-crop-container', indices, traces, suggested, 'mystery', sources)
     document.getElementById('btn-l5-apply-mystery-crops').disabled = False
-    log(f"Loaded {len(examples)} mystery motion(s) with a suggested crop point each. Drag any marker to adjust, then Apply Crops.")
+    log(f"Loaded {len(examples)} mystery motion(s) with a suggested crop point each. Drag either marker to adjust, then Apply Crops.")
 
 def l5_delete_mystery_example(idx):
     """Removes one mystery motion outright — same reasoning as Lesson 5's
@@ -942,18 +983,12 @@ def l5_apply_mystery_crops(e=None):
     for i, original_trace in _crop_originals_mystery.items():
         if i >= len(examples):
             continue
-        el = document.getElementById(f'l5-mystery-crop-value-{i}')
-        if el is None:
-            continue
-        try:
-            crop_seconds = float(el.value)
-        except Exception:
-            crop_seconds = 0.0
-        start_idx = max(0, min(len(original_trace) - 4, round(crop_seconds / 0.05)))
-        examples[i]['trace'] = original_trace[start_idx:]
-        if start_idx > 0:
+        start_idx, end_idx = _read_crop_bounds(
+            original_trace, f'l5-mystery-crop-value-{i}', f'l5-mystery-crop-end-value-{i}')
+        examples[i]['trace'] = original_trace[start_idx:end_idx]
+        if start_idx > 0 or end_idx < len(original_trace):
             changed += 1
-    log(f"Applied crops: trimmed dead time from {changed} of {len(_crop_originals_mystery)} mystery motion(s). "
+    log(f"Applied crops: trimmed {changed} of {len(_crop_originals_mystery)} mystery motion(s). "
         "Click Find Patterns again to see the effect.")
 
 
