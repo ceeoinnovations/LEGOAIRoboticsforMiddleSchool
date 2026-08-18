@@ -274,9 +274,11 @@ def _refresh_l1_overlay():
     Fireball example (raw elapsed time, so uneven start-of-recording dead
     time shows up as visibly different), plus the most recent test cast
     highlighted on top so students can see how it lines up against the
-    training set."""
+    training set. Also refreshes Lesson 2's copy of this chart, since both
+    read the same Fireball training set."""
     traces = [accel_magnitude(ex['trace']) for ex in _datasets['fireball']]
     window.renderExampleOverlay('l1-overlay-canvas', traces, 0.05, _last_cast_magnitude)
+    _refresh_l2_overlay()
 
 def l1_record_start(e=None):
     _begin_record('l1-record')
@@ -446,6 +448,17 @@ def l1_clear(e=None):
 # ══════════════════════════════════════════════════════════════
 
 _lesson2_results = []
+_last_friend_magnitude = None  # accel-magnitude trace of the most recent Lesson 2 test cast, or None
+_last_friend_tester = None     # name of whoever cast _last_friend_magnitude
+
+def _refresh_l2_overlay():
+    """Lesson 2's version of Lesson 1's 'compare your examples' chart: same
+    Fireball training traces, but highlights the tester's most recent cast
+    (instead of your own) so it's visible how different a friend's motion
+    is from what the wand actually learned."""
+    traces = [accel_magnitude(ex['trace']) for ex in _datasets['fireball']]
+    current_label = f"{_last_friend_tester}'s last cast" if _last_friend_tester else 'your last cast'
+    window.renderExampleOverlay('l2-overlay-canvas', traces, 0.05, _last_friend_magnitude, current_label)
 
 def l2_cast_start(e=None):
     if knn_fireball is None:
@@ -454,6 +467,7 @@ def l2_cast_start(e=None):
     _begin_record('l2-cast')
 
 def l2_cast_stop(e=None):
+    global _last_friend_magnitude, _last_friend_tester
     trace = _end_record()
     if trace is None:
         return
@@ -472,6 +486,10 @@ def l2_cast_stop(e=None):
     total = len(_lesson2_results)
     pct = 100.0 * hits / total
     window.setResultsSummary('l2-summary', f"{hits}/{total} casts recognized ({pct:.0f}%)")
+
+    _last_friend_magnitude = accel_magnitude(trace)
+    _last_friend_tester = tester
+    _refresh_l2_overlay()
 
 def l2_reset(e=None):
     _lesson2_results.clear()
