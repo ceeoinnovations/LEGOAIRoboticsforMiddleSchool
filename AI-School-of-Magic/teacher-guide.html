@@ -443,7 +443,11 @@
       whatever your class already uses for file handoff — who then imports every file before Step 3.</p>
     <h3>What &ldquo;working&rdquo; looks like</h3>
     <p>Distinct, well-separated clusters on the scatter plot when k matches however many motions were actually
-      (secretly) assigned.</p>
+      (secretly) assigned. The result also reports a &ldquo;spread score&rdquo; — k-means inertia, i.e. the sum
+      of each motion's squared distance to its cluster's center — where lower means tighter, more consistent
+      groups. It's only meaningful relative to other runs on the <em>same</em> set of motions, so use it to
+      compare different k values against each other, or to check whether the optional crop tool actually
+      tightened things up; it's not a number with meaning on its own.</p>
     <h3>Common snags &amp; fixes</h3>
     <ul>
       <li>Motions that are too similar to each other are hard for the algorithm (and for students eyeballing the
