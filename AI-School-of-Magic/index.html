@@ -49,7 +49,7 @@
   }
   .header {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: 1fr auto;
     align-items: center;
     gap: 20px;
     width: 100%;
@@ -59,7 +59,6 @@
   .header-text { text-align: center; }
   .header h1 { margin: 0; font-size: 2.4rem; color: var(--text-primary); font-family: 'Varela Round', 'Droid Sans', sans-serif; }
   .header p { margin: 8px 0 0; color: var(--text-secondary); }
-  .header-logo-aisom { height: 80px; width: auto; justify-self: start; }
   .header-logo-ewb-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; justify-self: end; }
   .header-logo-ewb { width: 140px; height: auto; }
   .teacher-guide-btn {
@@ -78,7 +77,7 @@
   .teacher-guide-btn:hover { background: var(--think-color); color: #fff; }
   @media (max-width: 700px) {
     .header { grid-template-columns: 1fr; justify-items: center; }
-    .header-logo-aisom, .header-logo-ewb-wrap { justify-self: center; }
+    .header-logo-ewb-wrap { justify-self: center; }
     .header-logo-ewb-wrap { align-items: center; }
   }
 
@@ -255,6 +254,21 @@
   }
   .collapsible-box summary:hover { color: var(--text-primary); }
   .collapsible-box[open] summary { margin-bottom: 10px; }
+  .intro-box {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+  }
+  .intro-box summary {
+    cursor: pointer;
+    font-weight: 700;
+    color: var(--text-secondary);
+  }
+  .intro-box summary:hover { color: var(--text-primary); }
+  .intro-box[open] summary { margin-bottom: 10px; }
   .tips-tricks ul {
     margin: 0;
     padding-left: 20px;
@@ -464,9 +478,9 @@
 </div>
 
 <div class="header">
-  <img class="header-logo-aisom" src="images/AISchoolofMagicLogo.png" alt="AI School of Magic logo">
   <div class="header-text">
-    <h1>&#10024; Magic Wand</h1>
+    <h1>&#10024; AI School of Magic</h1>
+    <p class="tagline">AI isn't magic — but it can look like magic until you understand it.</p>
     <p>Teach your LEGO&reg; wand to recognize spells using its built-in motion sensor.</p>
   </div>
   <div class="header-logo-ewb-wrap">
@@ -532,8 +546,6 @@
   <div class="page-content" id="page-l0">
     <div class="panel main-content">
       <h2>Lesson 0: Build Your Wand</h2>
-      <p class="tagline">AI isn't magic — but it can look like magic until you understand it.</p>
-
 
       <div class="challenge-box">
         <h3>Challenge</h3>
@@ -601,10 +613,8 @@
 
   <!-- Lesson 1 -->
   <div class="page-content hidden" id="page-l1">
-    <div class="panel main-content">
-      <h2>Lesson 1: Teach Your Wand a Spell</h2>
-      <p class="tagline">AI isn't magic — but it can look like magic until you understand it.</p>
-
+    <details class="intro-box" open>
+      <summary>Challenge</summary>
       <div class="challenge-box">
         <h3>Challenge</h3>
         <p>Teach your wand to recognize one spell, just by showing it examples!</p>
@@ -625,6 +635,9 @@
       examples of ONE spell — "Fireball". Hold the button below, do
       your Fireball motion with the wand, then let go. Do this 6-8
       times, trying to repeat roughly the same motion.</p>
+    </details>
+    <div class="panel main-content">
+      <h2>Lesson 1: Teach Your Wand a Spell</h2>
       <div class="subsection">
         <h3>Step 1: Record examples</h3>
         <button class="record-btn" id="btn-l1-record" disabled
@@ -687,14 +700,12 @@
 
   <!-- Lesson 2 -->
   <div class="page-content hidden" id="page-l2">
-    <div class="panel main-content">
-      <h2>Lesson 2: Can Your Friend Use It?</h2>
-      <p class="tagline">AI isn't magic — but it can look like magic until you understand it.</p>
-
+    <details class="intro-box" open>
+      <summary>Challenge</summary>
       <div class="challenge-box">
         <h3>Challenge</h3>
         <p>Can your friend use your gesture to do your spell?</p>
-	<img src="images/MagicWandFriend.png" loading="lazy"
+        <img src="images/MagicWandFriend.png" loading="lazy"
             alt="Two brick characters with a wand and a question mark between them">
       </div>
 
@@ -712,7 +723,10 @@
       <p class="lesson-intro">Hand the wand to a friend — someone who never trained it. Do NOT retrain anything on
         this page. Just see how well the spell YOU taught it works for someone else. This is where AI bias shows
         up: a model trained on only one person's motion may not generalize to everyone.</p>
+    </details>
 
+    <div class="panel main-content">
+      <h2>Lesson 2: Can Your Friend Use It?</h2>
       <div class="subsection">
         <label for="l2-tester-name" style="font-weight: 600; font-size: 0.9rem;">Tester's name:</label>
         <input type="text" id="l2-tester-name" placeholder="e.g. Alex" value="Friend">
@@ -758,10 +772,8 @@
 
   <!-- Lesson 3 -->
   <div class="page-content hidden" id="page-l3">
-    <div class="panel main-content">
-      <h2>Lesson 3: Improve It — Data Bias</h2>
-      <p class="tagline">AI isn't magic — but it can look like magic until you understand it.</p>
-
+    <details class="intro-box" open>
+      <summary>Challenge</summary>
       <div class="challenge-box">
         <h3>Challenge</h3>
         <p>Fix the bias — retrain your wand so it works for your friend too!</p>
@@ -783,7 +795,10 @@
       <p class="lesson-intro">Fine-tune the model: add your friend's Lesson 2 attempts into the training set, then
         retrain, then test again. Does the wand recognize your friend's spell better now? This fixes <em>who's</em>
         represented in the training data — Lesson 4 tackles a different kind of data problem.</p>
+    </details>
 
+    <div class="panel main-content">
+      <h2>Lesson 3: Improve It — Data Bias</h2>
       <div class="subsection">
         <div class="actions-row">
           <button id="btn-l3-add" py-click="l3_add_to_training">Add Friend's Examples to Training</button>
@@ -840,10 +855,8 @@
 
   <!-- Lesson 4: Who Cast It? (caster-identity classification) -->
   <div class="page-content hidden" id="page-lwho">
-    <div class="panel main-content">
-      <h2>Lesson 4: Who Cast It?</h2>
-      <p class="tagline">AI isn't magic — but it can look like magic until you understand it.</p>
-
+    <details class="intro-box" open>
+      <summary>Challenge</summary>
       <div class="challenge-box">
         <h3>Challenge</h3>
         <p>Can the AI tell you and your friend apart, just by how you both cast the same spell?</p>
@@ -863,7 +876,10 @@
       <p class="lesson-intro">This reuses the casts you already recorded in Lessons 1 and 2 — no new
         recording needed to train. This time the AI isn't learning "is this a Fireball?" — it's learning
         "whose Fireball is this?"</p>
+    </details>
 
+    <div class="panel main-content">
+      <h2>Lesson 4: Who Cast It?</h2>
       <div class="subsection">
         <h3>Step 1: Train the identity classifier</h3>
         <p class="lesson-intro" style="margin-bottom: 0;">Uses your Lesson 1 examples plus every friend
@@ -917,10 +933,8 @@
 
   <!-- Lesson 5: Data Cleaning -->
   <div class="page-content hidden" id="page-l4">
-    <div class="panel main-content">
-      <h2>Lesson 5: Improve It — Data Cleaning</h2>
-      <p class="tagline">AI isn't magic — but it can look like magic until you understand it.</p>
-
+    <details class="intro-box" open>
+      <summary>Challenge</summary>
       <div class="challenge-box">
         <h3>Challenge</h3>
         <p>Clean up your training data — trim the dead time before the real spell begins!</p>
@@ -941,7 +955,10 @@
         actually casting, your recordings include "dead time" at the start — flat, motionless samples that don't
         represent the spell at all. This fixes <em>how clean</em> each individual recording is, a different problem
         from Lesson 3's data diversity fix.</p>
+    </details>
 
+    <div class="panel main-content">
+      <h2>Lesson 5: Improve It — Data Cleaning</h2>
       <div class="subsection">
         <h3>Step 1: Review the suggested crop points</h3>
         <p class="lesson-intro" style="margin-bottom: 0;">Each example below shows a suggested starting point
@@ -1034,10 +1051,8 @@
 
   <!-- Lesson 5 -->
   <div class="page-content hidden" id="page-l5">
-    <div class="panel main-content">
-      <h2>Class 2, Lesson 1: Discover Hidden Magic Styles</h2>
-      <p class="tagline">AI isn't magic — but it can look like magic until you understand it.</p>
-
+    <details class="intro-box" open>
+      <summary>Challenge</summary>
       <div class="challenge-box">
         <h3>Challenge</h3>
         <p>Let the AI find its own groups — no labels, no hints!</p>
@@ -1057,7 +1072,10 @@
       <p class="lesson-intro">Unsupervised learning: record several different mystery motions — don't tell the AI
         (or each other!) what they're supposed to be. A teacher can secretly assign 2-3 different motions across the
         class. Then let the AI find its own groups, with no labels at all.</p>
+    </details>
 
+    <div class="panel main-content">
+      <h2>Class 2, Lesson 1: Discover Hidden Magic Styles</h2>
       <div class="subsection">
         <h3>Step 1: Record mystery motions</h3>
         <button class="record-btn" id="btn-l5-record" disabled
@@ -1141,10 +1159,8 @@
 
   <!-- Lesson 6 -->
   <div class="page-content hidden" id="page-l6">
-    <div class="panel main-content">
-      <h2>Class 2, Lesson 2: Make New Spells</h2>
-      <p class="tagline">AI isn't magic — but it can look like magic until you understand it.</p>
-
+    <details class="intro-box" open>
+      <summary>Challenge</summary>
       <div class="challenge-box">
         <h3>Challenge</h3>
         <p>Turn the AI's discoveries into brand-new spells you can cast!</p>
@@ -1164,7 +1180,10 @@
       <p class="lesson-intro">Use the groups the AI discovered in Lesson 5 as brand-new spell categories. Give each
         group a name, save them, then cast your new spells — the wand will light up and beep differently for each
         one it recognizes.</p>
+    </details>
 
+    <div class="panel main-content">
+      <h2>Class 2, Lesson 2: Make New Spells</h2>
       <div class="subsection">
         <button id="btn-l6-load-clusters" py-click="l6_load_clusters" disabled>Load Clusters from Lesson 5</button>
         <div id="l6-naming-container"></div>
@@ -1207,7 +1226,11 @@
       const el = document.getElementById('page-' + p);
       const btn = document.getElementById('tab-btn-' + p);
       if (!el || !btn) return;
-      if (p === name) { el.classList.remove('hidden'); btn.classList.add('active'); }
+      if (p === name) {
+        el.classList.remove('hidden'); btn.classList.add('active');
+        const intro = el.querySelector('.intro-box');
+        if (intro) intro.open = true;
+      }
       else { el.classList.add('hidden'); btn.classList.remove('active'); }
     });
   };
