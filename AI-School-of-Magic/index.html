@@ -374,6 +374,28 @@
     font-weight: 600;
     color: var(--text-primary);
   }
+  .crop-source-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #6d28d9;
+    background: #ede9fe;
+    border-radius: 999px;
+    padding: 1px 8px;
+    margin-left: 4px;
+  }
+  .crop-example-times {
+    font-size: 0.78rem;
+    color: var(--text-secondary, #475569);
+    margin-bottom: 6px;
+  }
+  .crop-slider-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-secondary, #475569);
+    margin-top: 6px;
+  }
   .crop-delete-btn {
     background: transparent;
     border: 1px solid var(--danger);
@@ -401,7 +423,7 @@
   }
   .crop-example input[type="range"] {
     width: 100%;
-    margin-top: 8px;
+    margin-top: 2px;
   }
 
   /* ── Browser compatibility warning (Web Bluetooth) ──────────────
@@ -1500,7 +1522,14 @@
   // crops and Class 2 Lesson 1's optional mystery-motion crops) without
   // their DOM ids or drag state colliding, even though the other one stays
   // mounted (just hidden) while you're on this tab.
-  window.renderCropExamples = function(containerId, indices, traces, suggestedTimes, datasetKind) {
+  // A crop card's source badge shows who the recording came from: the
+  // student's own casts are stored with source 'you' (shown as "You"),
+  // everything else is a tester/classmate name recorded verbatim.
+  function cropSourceLabel(source) {
+    return (!source || source === 'you') ? 'You' : source;
+  }
+
+  window.renderCropExamples = function(containerId, indices, traces, suggestedTimes, datasetKind, sources) {
     const container = document.getElementById(containerId);
     if (!container) return;
     const emptyMsg = document.getElementById(containerId + '-empty');
@@ -1517,19 +1546,30 @@
     container.innerHTML = indices.map(function (idx, i) {
       const trace = traces[i];
       const maxDuration = Math.max((trace.length - 1) * CROP_SAMPLE_INTERVAL, 0.05);
+      const srcLabel = cropSourceLabel(sources && sources[i]);
+      const endTime = maxDuration;
       return '<div class="crop-example">' +
         '<div class="crop-example-header">' +
-        '<div class="crop-example-label">Example #' + (idx + 1) + ' — start: ' +
-        '<span id="' + prefix + '-label-' + idx + '">' + suggestedTimes[i].toFixed(2) + 's</span></div>' +
+        '<div class="crop-example-label">Example #' + (idx + 1) +
+        ' <span class="crop-source-badge">' + srcLabel + '</span></div>' +
         '<button type="button" class="crop-delete-btn" onclick="requestCropDelete(' + idx + ', \'' + kind + '\')" ' +
-        'aria-label="Remove example ' + (idx + 1) + ' entirely">&#10005; Remove</button>' +
+        'aria-label="Remove example ' + (idx + 1) + ' (' + srcLabel + ') entirely">&#10005; Remove</button>' +
         '</div>' +
+        '<div class="crop-example-times">Keep from ' +
+        '<span id="' + prefix + '-label-' + idx + '">' + suggestedTimes[i].toFixed(2) + 's</span> to ' +
+        '<span id="' + prefix + '-end-label-' + idx + '">' + endTime.toFixed(2) + 's</span></div>' +
         '<canvas class="crop-canvas" id="' + prefix + '-canvas-' + idx + '" width="600" height="90" ' +
-        'role="img" aria-label="Example ' + (idx + 1) + ' motion trace with a draggable crop-start marker"></canvas>' +
+        'role="img" aria-label="Example ' + (idx + 1) + ' (' + srcLabel + ') motion trace with draggable start and end crop markers"></canvas>' +
+        '<label class="crop-slider-label" for="' + prefix + '-value-' + idx + '">Trim start</label>' +
         '<input type="range" id="' + prefix + '-value-' + idx + '" min="0" max="' + maxDuration.toFixed(3) +
         '" step="0.05" value="' + suggestedTimes[i] + '" ' +
-        'aria-label="Crop start time for example ' + (idx + 1) + ', in seconds" ' +
-        'oninput="onCropSliderInput(\'' + prefix + '\', ' + idx + ', this.value)">' +
+        'aria-label="Crop start time for example ' + (idx + 1) + ' (' + srcLabel + '), in seconds" ' +
+        'oninput="onCropSliderInput(\'' + prefix + '\', ' + idx + ', this.value, \'start\')">' +
+        '<label class="crop-slider-label" for="' + prefix + '-end-value-' + idx + '">Trim end</label>' +
+        '<input type="range" id="' + prefix + '-end-value-' + idx + '" min="0" max="' + maxDuration.toFixed(3) +
+        '" step="0.05" value="' + endTime.toFixed(3) + '" ' +
+        'aria-label="Crop end time for example ' + (idx + 1) + ' (' + srcLabel + '), in seconds" ' +
+        'oninput="onCropSliderInput(\'' + prefix + '\', ' + idx + ', this.value, \'end\')">' +
         '</div>';
     }).join('');
 
@@ -1538,43 +1578,78 @@
     });
   };
 
-  window.onCropSliderInput = function(prefix, idx, value) {
+  window.onCropSliderInput = function(prefix, idx, value, which) {
     const state = cropState[prefix + ':' + idx];
     if (!state) return;
-    state.markerTime = parseFloat(value);
-    const label = document.getElementById(prefix + '-label-' + idx);
-    if (label) label.innerText = state.markerTime.toFixed(2) + 's';
+    const t = parseFloat(value);
+    if (which === 'end') {
+      state.endMarkerTime = Math.max(t, state.markerTime);
+      const label = document.getElementById(prefix + '-end-label-' + idx);
+      if (label) label.innerText = state.endMarkerTime.toFixed(2) + 's';
+    } else {
+      state.markerTime = Math.min(t, state.endMarkerTime);
+      const label = document.getElementById(prefix + '-label-' + idx);
+      if (label) label.innerText = state.markerTime.toFixed(2) + 's';
+    }
     drawCropCanvas(prefix, idx);
   };
 
-  function setupCropCanvas(prefix, idx, trace, suggestedTime) {
+  // Each crop card has two markers — a start marker (trim leading dead
+  // time) and an end marker (trim trailing dead time) — sharing one
+  // canvas. Dragging picks whichever marker the pointer started closer
+  // to, so a click anywhere on the trace moves the marker it's nearest.
+  function setupCropCanvas(prefix, idx, trace, suggestedStartTime) {
     const canvas = document.getElementById(prefix + '-canvas-' + idx);
     if (!canvas) return;
     const key = prefix + ':' + idx;
-    cropState[key] = { trace: trace, markerTime: suggestedTime, dragging: false };
+    const maxDuration = Math.max((trace.length - 1) * CROP_SAMPLE_INTERVAL, 0.05);
+    cropState[key] = { trace: trace, markerTime: suggestedStartTime, endMarkerTime: maxDuration, dragging: false, dragTarget: 'start' };
     drawCropCanvas(prefix, idx);
 
     function timeAtClientX(clientX) {
       const rect = canvas.getBoundingClientRect();
       const pad = 8;
-      const maxDuration = Math.max((trace.length - 1) * CROP_SAMPLE_INTERVAL, 0.05);
       const frac = Math.max(0, Math.min(1, (clientX - rect.left - pad) / (rect.width - 2 * pad)));
       return frac * maxDuration;
     }
-    function moveMarkerTo(clientX) {
+    function nearestMarker(t) {
+      const state = cropState[key];
+      return Math.abs(t - state.markerTime) <= Math.abs(t - state.endMarkerTime) ? 'start' : 'end';
+    }
+    function moveMarkerTo(clientX, which) {
       const t = timeAtClientX(clientX);
-      cropState[key].markerTime = t;
-      const slider = document.getElementById(prefix + '-value-' + idx);
-      if (slider) slider.value = t.toFixed(3);
-      const label = document.getElementById(prefix + '-label-' + idx);
-      if (label) label.innerText = t.toFixed(2) + 's';
+      const state = cropState[key];
+      if (which === 'end') {
+        state.endMarkerTime = Math.max(t, state.markerTime);
+        const slider = document.getElementById(prefix + '-end-value-' + idx);
+        if (slider) slider.value = state.endMarkerTime.toFixed(3);
+        const label = document.getElementById(prefix + '-end-label-' + idx);
+        if (label) label.innerText = state.endMarkerTime.toFixed(2) + 's';
+      } else {
+        state.markerTime = Math.min(t, state.endMarkerTime);
+        const slider = document.getElementById(prefix + '-value-' + idx);
+        if (slider) slider.value = state.markerTime.toFixed(3);
+        const label = document.getElementById(prefix + '-label-' + idx);
+        if (label) label.innerText = state.markerTime.toFixed(2) + 's';
+      }
       drawCropCanvas(prefix, idx);
     }
 
-    canvas.onmousedown = function (e) { cropState[key].dragging = true; moveMarkerTo(e.clientX); };
-    canvas.onmousemove = function (e) { if (cropState[key].dragging) moveMarkerTo(e.clientX); };
-    canvas.ontouchstart = function (e) { e.preventDefault(); cropState[key].dragging = true; moveMarkerTo(e.touches[0].clientX); };
-    canvas.ontouchmove = function (e) { e.preventDefault(); if (cropState[key].dragging) moveMarkerTo(e.touches[0].clientX); };
+    canvas.onmousedown = function (e) {
+      const which = nearestMarker(timeAtClientX(e.clientX));
+      cropState[key].dragging = true;
+      cropState[key].dragTarget = which;
+      moveMarkerTo(e.clientX, which);
+    };
+    canvas.onmousemove = function (e) { if (cropState[key].dragging) moveMarkerTo(e.clientX, cropState[key].dragTarget); };
+    canvas.ontouchstart = function (e) {
+      e.preventDefault();
+      const which = nearestMarker(timeAtClientX(e.touches[0].clientX));
+      cropState[key].dragging = true;
+      cropState[key].dragTarget = which;
+      moveMarkerTo(e.touches[0].clientX, which);
+    };
+    canvas.ontouchmove = function (e) { e.preventDefault(); if (cropState[key].dragging) moveMarkerTo(e.touches[0].clientX, cropState[key].dragTarget); };
     canvas.ontouchend = function () { cropState[key].dragging = false; };
     // Mouseup/mousemove are attached to the canvas itself above for the
     // common case, plus a window-level mouseup so dragging still ends
@@ -1597,11 +1672,13 @@
     const maxV = Math.max.apply(null, trace.concat([1]));
     const xOf = function (i) { return pad + (i * CROP_SAMPLE_INTERVAL / maxDuration) * (w - 2 * pad); };
     const yOf = function (v) { return h - pad - (v / maxV) * (h - 2 * pad); };
-    const markerX = pad + (state.markerTime / maxDuration) * (w - 2 * pad);
+    const startX = pad + (state.markerTime / maxDuration) * (w - 2 * pad);
+    const endX = pad + (state.endMarkerTime / maxDuration) * (w - 2 * pad);
 
-    // shade the region that would be cropped away
+    // shade the regions that would be cropped away, on both ends
     ctx.fillStyle = 'rgba(239, 68, 68, 0.12)';
-    ctx.fillRect(pad, pad, Math.max(0, markerX - pad), h - 2 * pad);
+    ctx.fillRect(pad, pad, Math.max(0, startX - pad), h - 2 * pad);
+    ctx.fillRect(endX, pad, Math.max(0, (w - pad) - endX), h - 2 * pad);
 
     ctx.strokeStyle = '#7c3aed';
     ctx.lineWidth = 2;
@@ -1612,12 +1689,18 @@
     });
     ctx.stroke();
 
-    ctx.strokeStyle = '#0f172a';
     ctx.lineWidth = 2;
     ctx.setLineDash([5, 3]);
+    ctx.strokeStyle = '#0f172a';
     ctx.beginPath();
-    ctx.moveTo(markerX, pad);
-    ctx.lineTo(markerX, h - pad);
+    ctx.moveTo(startX, pad);
+    ctx.lineTo(startX, h - pad);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#1d4ed8';
+    ctx.beginPath();
+    ctx.moveTo(endX, pad);
+    ctx.lineTo(endX, h - pad);
     ctx.stroke();
     ctx.setLineDash([]);
   }
