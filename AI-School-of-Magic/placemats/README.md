@@ -39,14 +39,16 @@ challenge text doesn't use.
 
 The Challenge and Think Like headings use `<fieldset>`/`<legend>` so the
 border breaks around the label (matching the reference template's notched
-heading style) instead of the label sitting inside a solid box.
+heading style) instead of the label sitting inside a solid box. The
+"BUILDING IDEAS" sidebar header is the actual `images/buildingideas.png`
+banner graphic (bulb icon + lettering) from the reference deck, not a
+recreated emoji-and-CSS approximation.
 
 ## Known limitations (proof of concept, not production)
 
 - Only the template's front side (Challenge / Think Like / Building Ideas) is
   implemented. The back side (Building Tips / Code It! / Challenge Yourself)
   isn't, since that content doesn't exist in `index.html` yet.
-- No hand-drawn icons (the circular logo mark, the lightbulb) — "Building
-  Ideas" uses a plain emoji bulb instead of the reference's teal line-art one.
+- No hand-drawn circular logo mark next to the lesson title.
 - PDF export shells out to a hardcoded macOS Chrome path; no PDF export on
   other platforms without adjusting `CHROME`.

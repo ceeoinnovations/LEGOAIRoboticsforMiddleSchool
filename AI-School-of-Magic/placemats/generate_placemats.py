@@ -186,14 +186,9 @@ def render_placemat(lesson: dict) -> str:
   .think-box p {{ margin: 2px 0 0; font-size: 0.9rem; }}
   .sidebar {{ flex: none; display: flex; flex-direction: column; }}
   .sidebar-header {{
-    background: {TEAL};
-    color: white;
-    font-weight: 700;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    padding: 6px 14px;
-    border-radius: 4px;
+    width: 3in;
+    height: auto;
+    display: block;
     margin-bottom: 0.1in;
   }}
   .building-idea-img {{
@@ -233,7 +228,7 @@ def render_placemat(lesson: dict) -> str:
       </div>
     </div>
     <div class="sidebar">
-      <div class="sidebar-header">&#128161; Building Ideas</div>
+      <img class="sidebar-header" src="../../images/buildingideas.png" alt="Building Ideas">
       {building_html}
     </div>
   </div>
